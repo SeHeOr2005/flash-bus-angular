@@ -1,0 +1,139 @@
+<div class="row">
+  <div class="col-12">
+    <mat-tab-group class="tickets-tabs">
+      <mat-tab label="Próximos Viajes" class="tab-content">
+        @if (activeTickets.length > 0) {
+        <div class="tickets-list">
+          @for (ticket of activeTickets; track ticket.id) {
+          <div class="ticket-card active-ticket">
+            <div class="ticket-header">
+              <div class="ticket-info">
+                <h5 class="bus-company">{{ ticket.busCompany }}</h5>
+                <p class="booking-code">Código: {{ ticket.bookingCode }}</p>
+              </div>
+              <span class="badge badge-success">Próximo</span>
+            </div>
+
+            <div class="ticket-route">
+              <div class="route-point">
+                <h6 class="time">{{ ticket.departure }}</h6>
+                <p class="location">{{ ticket.origin }}</p>
+              </div>
+              <div class="route-divider">
+                <mat-icon>directions_bus</mat-icon>
+              </div>
+              <div class="route-point">
+                <h6 class="time">{{ ticket.arrival }}</h6>
+                <p class="location">{{ ticket.destination }}</p>
+              </div>
+            </div>
+
+            <div class="ticket-details">
+              <div class="detail-item">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ ticket.date }}</span>
+              </div>
+              <div class="detail-item">
+                <mat-icon>person</mat-icon>
+                <span>{{ ticket.passenger }}</span>
+              </div>
+              <div class="detail-item">
+                <mat-icon>event_seat</mat-icon>
+                <span>Asiento {{ ticket.seat }}</span>
+              </div>
+            </div>
+
+            <div class="qr-section">
+              <div class="qr-code">
+                <p>QR Code</p>
+              </div>
+              <p class="qr-label">{{ ticket.qrCode }}</p>
+            </div>
+
+            <div class="ticket-actions">
+              <button class="btn btn-sm btn-outline-primary" (click)="downloadTicket(ticket)">
+                <mat-icon>download</mat-icon> Descargar
+              </button>
+              <button class="btn btn-sm btn-outline-primary" (click)="shareTicket(ticket)">
+                <mat-icon>share</mat-icon> Compartir
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="cancelTicket(ticket)">
+                <mat-icon>close</mat-icon> Cancelar
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        }
+        @if (activeTickets.length === 0) {
+        <div class="empty-state">
+          <mat-icon>event_note</mat-icon>
+          <p>No tienes próximos viajes</p>
+        </div>
+        }
+      </mat-tab>
+
+      <mat-tab label="Historial" class="tab-content">
+        @if (completedTickets.length > 0) {
+        <div class="tickets-list">
+          @for (ticket of completedTickets; track ticket.id) {
+          <div class="ticket-card completed-ticket">
+            <div class="ticket-header">
+              <div class="ticket-info">
+                <h5 class="bus-company">{{ ticket.busCompany }}</h5>
+                <p class="booking-code">Código: {{ ticket.bookingCode }}</p>
+              </div>
+              <span class="badge badge-secondary">Completado</span>
+            </div>
+
+            <div class="ticket-route">
+              <div class="route-point">
+                <h6 class="time">{{ ticket.departure }}</h6>
+                <p class="location">{{ ticket.origin }}</p>
+              </div>
+              <div class="route-divider">
+                <mat-icon>directions_bus</mat-icon>
+              </div>
+              <div class="route-point">
+                <h6 class="time">{{ ticket.arrival }}</h6>
+                <p class="location">{{ ticket.destination }}</p>
+              </div>
+            </div>
+
+            <div class="ticket-details">
+              <div class="detail-item">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ ticket.date }}</span>
+              </div>
+              <div class="detail-item">
+                <mat-icon>person</mat-icon>
+                <span>{{ ticket.passenger }}</span>
+              </div>
+              <div class="detail-item">
+                <mat-icon>event_seat</mat-icon>
+                <span>Asiento {{ ticket.seat }}</span>
+              </div>
+            </div>
+
+            <div class="ticket-actions">
+              <button class="btn btn-sm btn-outline-primary" (click)="downloadTicket(ticket)">
+                <mat-icon>download</mat-icon> Descargar
+              </button>
+              <button class="btn btn-sm btn-outline-primary" (click)="shareTicket(ticket)">
+                <mat-icon>share</mat-icon> Compartir
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        }
+        @if (completedTickets.length === 0) {
+        <div class="empty-state">
+          <mat-icon>event_note</mat-icon>
+          <p>No hay viajes completados</p>
+        </div>
+        }
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

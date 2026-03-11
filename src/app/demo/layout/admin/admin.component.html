@@ -1,0 +1,24 @@
+<mat-drawer-container class="drawer-container">
+  <mat-drawer #sidebar class="pc-sidebar" [mode]="modeValue" opened>
+    <nav>
+      <div class="navbar-wrapper">
+        <div class="m-header">
+          <a href="/">
+            <img src="assets/images/flash-bus-logo.png" alt="Flash Bus Logo" height="50" style="width: auto;" />
+          </a>
+        </div>
+        <app-vertical-menu [menus]="(menus | async) || []" />
+      </div>
+    </nav>
+  </mat-drawer>
+  <app-nav-bar />
+  <div class="app-container">
+    <app-breadcrumb />
+    <div class="main-body">
+      <div class="page-wrapper">
+        <router-outlet />
+      </div>
+    </div>
+  </div>
+  <app-footer />
+</mat-drawer-container>

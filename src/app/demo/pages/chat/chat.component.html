@@ -1,0 +1,141 @@
+<div class="row">
+  <!-- Panel izquierdo: Secciones y conversaciones -->
+  <div class="col-lg-4">
+    <app-card class="chat-list">
+      <!-- Tabs de secciones -->
+      <div class="chat-sections">
+        <button
+          class="section-tab"
+          [class.active]="activeSection === 'community'"
+          (click)="setSection('community')"
+        >
+          <mat-icon>groups</mat-icon>
+          <span>Comunidad</span>
+        </button>
+        <button
+          class="section-tab"
+          [class.active]="activeSection === 'support'"
+          (click)="setSection('support')"
+        >
+          <mat-icon>support_agent</mat-icon>
+          <span>Atención</span>
+        </button>
+        <button
+          class="section-tab"
+          [class.active]="activeSection === 'private'"
+          (click)="setSection('private')"
+        >
+          <mat-icon>chat</mat-icon>
+          <span>Mis Chats</span>
+        </button>
+      </div>
+
+      <!-- Descripción de la sección activa -->
+      <div class="section-header">
+        @if (activeSection === 'community') {
+          <h6 class="m-0"><mat-icon class="section-icon">groups</mat-icon> Chat de la Comunidad</h6>
+          <p class="section-desc">Comparte información con otros usuarios sobre rutas, paradas y novedades.</p>
+        }
+        @if (activeSection === 'support') {
+          <h6 class="m-0"><mat-icon class="section-icon">support_agent</mat-icon> Centro de Atención</h6>
+          <p class="section-desc">Soporte oficial de Flash Bus. Resolvemos tus dudas e inquietudes.</p>
+        }
+        @if (activeSection === 'private') {
+          <h6 class="m-0"><mat-icon class="section-icon">chat</mat-icon> Mis Chats</h6>
+          <p class="section-desc">Tus conversaciones privadas con otros usuarios.</p>
+        }
+      </div>
+
+      <!-- Lista de conversaciones privadas -->
+      @if (activeSection === 'private') {
+        <div class="chat-conversations">
+          @for (conv of privateConversations; track conv.id) {
+            <div
+              class="conversation-item"
+              [class.active]="activeConversationId === conv.id"
+              (click)="openConversation(conv.id)"
+            >
+              <div class="avatar-wrapper">
+                <img [src]="conv.avatar" alt="{{ conv.name }}" class="avatar-sm" />
+                @if (conv.online) {
+                  <span class="online-dot"></span>
+                }
+              </div>
+              <div class="conv-content">
+                <h6 class="name">{{ conv.name }}</h6>
+                <p class="message-preview">{{ conv.lastMessage }}</p>
+              </div>
+              @if (conv.unread) {
+                <span class="unread-badge">{{ conv.unread }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </app-card>
+  </div>
+
+  <!-- Panel derecho: Área de chat -->
+  <div class="col-lg-8">
+    @if (showChatArea) {
+      <app-card class="chat-box">
+        <div class="card-header">
+          <div class="chat-header-content">
+            @if (activeSection === 'community') {
+              <mat-icon class="header-icon community">groups</mat-icon>
+            }
+            @if (activeSection === 'support') {
+              <mat-icon class="header-icon support">support_agent</mat-icon>
+            }
+            @if (activeSection === 'private') {
+              <mat-icon class="header-icon private">person</mat-icon>
+            }
+            <h5 class="m-0">{{ currentTitle }}</h5>
+          </div>
+        </div>
+
+        <div class="chat-messages">
+          @for (msg of currentMessages; track msg.id) {
+            <div [ngClass]="['message', msg.sender]">
+              @if (msg.sender === 'other') {
+                <div class="message-avatar">
+                  <img [src]="msg.avatar" alt="sender" class="avatar-sm" />
+                </div>
+              }
+              <div class="message-content">
+                @if (msg.sender === 'other' && msg.senderName && activeSection === 'community') {
+                  <small class="sender-name">{{ msg.senderName }}</small>
+                }
+                <p class="message-text">{{ msg.text }}</p>
+                <small class="message-time">{{ msg.timestamp | date: 'HH:mm' }}</small>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="chat-input-area">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              [placeholder]="activeSection === 'community' ? 'Escribe al chat comunitario...' : 'Escribe tu mensaje...'"
+              [(ngModel)]="newMessage"
+              (keyup.enter)="sendMessage()"
+            />
+            <button class="btn btn-primary" type="button" (click)="sendMessage()">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </div>
+      </app-card>
+    } @else {
+      <app-card class="chat-box chat-placeholder">
+        <div class="placeholder-content">
+          <mat-icon class="placeholder-icon">chat_bubble_outline</mat-icon>
+          <h5>Selecciona una conversación</h5>
+          <p>Elige un chat de la lista para comenzar a conversar.</p>
+        </div>
+      </app-card>
+    }
+  </div>
+</div>

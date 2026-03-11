@@ -1,0 +1,140 @@
+<div class="dashboard-container">
+  <!-- Estadísticas Rápidas -->
+  <div class="row stat-row mb-4">
+    <div class="col-md-6 col-lg-3" *ngFor="let stat of quickStats">
+      <app-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" [ngClass]="'icon-' + stat.color">
+            <mat-icon>{{ stat.icon }}</mat-icon>
+          </div>
+          <div class="stat-info">
+            <p class="stat-label">{{ stat.label }}</p>
+            <h3 class="stat-value">{{ stat.value }}</h3>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Noticias y Alertas -->
+    <div class="col-lg-8">
+      <!-- Alertas Activas -->
+      <app-card class="news-section mb-4">
+        <div class="section-header">
+          <h5>🚨 Alertas Activas</h5>
+        </div>
+        <div class="alerts-container">
+          <div *ngFor="let news of getNews('alert')" class="alert-item" [ngClass]="getAlertClass(news.priority)">
+            <div class="alert-icon">
+              <mat-icon>{{ news.icon }}</mat-icon>
+            </div>
+            <div class="alert-content">
+              <h6>{{ news.title }}</h6>
+              <p>{{ news.description }}</p>
+              <small>{{ formatTime(news.timestamp) }}</small>
+            </div>
+          </div>
+          <div *ngIf="getNews('alert').length === 0" class="no-items">
+            <p>No hay alertas activas en este momento</p>
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Noticias de Empresas -->
+      <app-card class="news-section mb-4">
+        <div class="section-header">
+          <h5>📰 Noticias de Operadores</h5>
+        </div>
+        <div class="news-container">
+          <div *ngFor="let news of getNews('news')" class="news-item">
+            <div class="news-icon">
+              <mat-icon>{{ news.icon }}</mat-icon>
+            </div>
+            <div class="news-content">
+              <div class="news-header">
+                <h6>{{ news.title }}</h6>
+                <span class="news-company">{{ news.company }}</span>
+              </div>
+              <p>{{ news.description }}</p>
+              <small>{{ formatTime(news.timestamp) }}</small>
+            </div>
+          </div>
+          <div *ngIf="getNews('news').length === 0" class="no-items">
+            <p>No hay noticias recientes</p>
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Avisos de Mantenimiento -->
+      <app-card class="news-section">
+        <div class="section-header">
+          <h5>🔧 Mantenimiento y Cambios</h5>
+        </div>
+        <div class="maintenance-container">
+          <div *ngFor="let news of getNews('maintenance')" class="maintenance-item">
+            <div class="maintenance-icon">
+              <mat-icon>{{ news.icon }}</mat-icon>
+            </div>
+            <div class="maintenance-content">
+              <h6>{{ news.title }}</h6>
+              <p>{{ news.description }}</p>
+              <small>{{ formatTime(news.timestamp) }}</small>
+            </div>
+          </div>
+          <div *ngIf="getNews('maintenance').length === 0" class="no-items">
+            <p>No hay avisos de mantenimiento</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+
+    <!-- Sidebar Derecho -->
+    <div class="col-lg-4">
+      <!-- Estado de Paradas -->
+      <app-card class="stops-section mb-4">
+        <div class="section-header">
+          <h5>🚏 Estado de Paradas</h5>
+        </div>
+        <div class="stops-container">
+          <div *ngFor="let stop of busStops" class="stop-item" [ngClass]="getStopStatusClass(stop.status)">
+            <div class="stop-status-indicator"></div>
+            <div class="stop-info">
+              <h6 class="stop-name">{{ stop.name }}</h6>
+              <p class="stop-location">
+                <mat-icon>{{ stop.icon }}</mat-icon>
+                {{ stop.location }}
+              </p>
+              <div class="stop-buses">
+                <span class="buses-count">{{ stop.busesWaiting }} buses</span>
+                <span class="status-text">{{ getStopStatusText(stop.status) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Avisos de Seguridad -->
+      <app-card class="safety-section">
+        <div class="section-header">
+          <h5>🛡️ Seguridad</h5>
+        </div>
+        <div class="safety-container">
+          <div *ngFor="let news of getNews('safety')" class="safety-item">
+            <div class="safety-icon">
+              <mat-icon>{{ news.icon }}</mat-icon>
+            </div>
+            <div class="safety-content">
+              <h6>{{ news.title }}</h6>
+              <p>{{ news.description }}</p>
+              <small>{{ formatTime(news.timestamp) }}</small>
+            </div>
+          </div>
+          <div *ngIf="getNews('safety').length === 0" class="no-items">
+            <p>No hay avisos de seguridad</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+</div>

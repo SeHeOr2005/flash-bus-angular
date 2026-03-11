@@ -1,0 +1,411 @@
+// === Header ===
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .header-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #4680FF;
+  }
+
+  .header-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--text-400);
+  }
+}
+
+// === Selector de empresa ===
+.company-selector {
+  padding: 20px 0 16px;
+
+  .form-label {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .form-select {
+    border: 1px solid var(--accent-300);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 14px;
+    max-width: 400px;
+    cursor: pointer;
+    appearance: auto;
+
+    &:focus {
+      border-color: #4680FF;
+      box-shadow: 0 0 0 3px rgba(70, 128, 255, 0.1);
+      outline: none;
+    }
+  }
+}
+
+// === Info de la empresa ===
+.company-info {
+  padding-top: 16px;
+  border-top: 1px solid var(--accent-200);
+
+  .company-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background: var(--accent-50);
+    border-radius: 8px;
+
+    .company-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .company-details {
+      flex: 1;
+
+      .company-name {
+        margin: 0 0 4px;
+        font-weight: 600;
+        font-size: 16px;
+      }
+
+      .company-desc {
+        margin: 0 0 10px;
+        font-size: 13px;
+        color: var(--text-500);
+      }
+
+      .company-stats {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+
+        .stat {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--text-600);
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: #4680FF;
+          }
+        }
+      }
+    }
+  }
+}
+
+// === Título de sección de rutas ===
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 16px;
+  font-weight: 600;
+
+  mat-icon {
+    color: #4680FF;
+  }
+
+  .route-count {
+    font-weight: 400;
+    color: var(--text-400);
+    font-size: 14px;
+  }
+}
+
+// === Grid de rutas ===
+.routes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.route-card {
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-left: 4px solid transparent;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  &.active {
+    border-left-color: #4680FF;
+    box-shadow: 0 4px 20px rgba(70, 128, 255, 0.12);
+  }
+
+  .route-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .route-badge {
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .route-title {
+      flex: 1;
+
+      .route-name {
+        margin: 0 0 4px;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .route-meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        span {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          color: var(--text-400);
+
+          mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+    }
+
+    .route-price {
+      font-weight: 700;
+      font-size: 16px;
+      color: #2ca87f;
+      white-space: nowrap;
+    }
+  }
+
+  // === Detalle expandido ===
+  .route-detail {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--accent-200);
+    animation: expandIn 0.3s ease-out;
+
+    .stops-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 16px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #4680FF;
+      }
+    }
+
+    .stops-timeline {
+      position: relative;
+      padding-left: 24px;
+
+      .stop-item {
+        position: relative;
+        padding: 0 0 20px 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+
+        &:not(:last-child)::before {
+          content: '';
+          position: absolute;
+          left: -18px;
+          top: 12px;
+          bottom: -8px;
+          width: 2px;
+          background-color: var(--accent-300);
+        }
+
+        &.last {
+          padding-bottom: 0;
+        }
+
+        .stop-dot {
+          position: absolute;
+          left: -24px;
+          top: 4px;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 0 0 2px var(--accent-300);
+          z-index: 1;
+        }
+
+        &.first .stop-dot,
+        &.last .stop-dot {
+          width: 16px;
+          height: 16px;
+          left: -25px;
+          top: 2px;
+        }
+
+        .stop-info {
+          display: flex;
+          flex-direction: column;
+
+          .stop-name {
+            font-size: 14px;
+            font-weight: 500;
+          }
+
+          .stop-order {
+            font-size: 11px;
+            color: var(--text-400);
+          }
+        }
+      }
+    }
+
+    .route-actions {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--accent-200);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+
+      .btn-sm {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 6px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      .coming-soon {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 8px 0 0;
+        padding: 10px 14px;
+        background-color: rgba(70, 128, 255, 0.06);
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--text-500);
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: #4680FF;
+        }
+      }
+    }
+  }
+}
+
+// === Estado vacío ===
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--accent-300);
+    margin-bottom: 16px;
+  }
+
+  h5 {
+    margin: 0 0 8px;
+    color: var(--text-700);
+  }
+
+  p {
+    margin: 0 auto;
+    max-width: 400px;
+    color: var(--text-400);
+    font-size: 14px;
+  }
+}
+
+// === Utilities ===
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.5rem;
+}
+
+.col-12 {
+  flex: 0 0 100%;
+  padding: 0.5rem;
+}
+
+.btn-outline-primary {
+  border: 1px solid #4680FF;
+  color: #4680FF;
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 800px;
+  }
+}
+
+.col-md-6 {
+  flex: 0 0 50%;
+  padding: 0.5rem;
+}
+
+.col-lg-4 {
+  flex: 0 0 33.33%;
+  padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .col-md-3,
+  .col-md-6,
+  .col-lg-4 {
+    flex: 0 0 100%;
+  }
+}
