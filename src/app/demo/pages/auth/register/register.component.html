@@ -30,13 +30,13 @@
             <div class="col-md-6">
               <label for="name" class="f-w-500">Nombre</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input type="text" matInput placeholder="Nombre" />
+                <input type="text" matInput placeholder="Nombre" [(ngModel)]="firstName" />
               </mat-form-field>
             </div>
             <div class="col-md-6">
               <label for="name" class="f-w-500">Apellido</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input type="text" matInput placeholder="Apellido" />
+                <input type="text" matInput placeholder="Apellido" [(ngModel)]="lastName" />
               </mat-form-field>
             </div>
             <div class="col-12">
@@ -51,7 +51,7 @@
             <div class="col-12">
               <label for="name" class="f-w-500">Ingresa tu contraseña</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Contraseña" />
+                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Contraseña" [(ngModel)]="password" />
                 <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="hide">
                   <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
@@ -60,7 +60,7 @@
             <div class="col-12">
               <label for="name" class="f-w-500">Confirma tu contraseña</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input matInput [type]="coHide ? 'password' : 'text'" placeholder="Confirma tu contraseña" />
+                <input matInput [type]="coHide ? 'password' : 'text'" placeholder="Confirma tu contraseña" [(ngModel)]="confirmPassword" />
                 <button
                   mat-icon-button
                   matSuffix
@@ -76,8 +76,13 @@
           <div class="check-me">
             <mat-checkbox class="float-start" checked color="primary">Acepto todos los términos y condiciones</mat-checkbox>
           </div>
+          @if (errorMessage) {
+            <p class="text-danger text-center m-t-10">{{ errorMessage }}</p>
+          }
           <div class="grid">
-            <button mat-flat-button color="primary" class="b-rad-20 m-t-15">Registrarse</button>
+            <button mat-flat-button color="primary" class="b-rad-20 m-t-15" (click)="onRegister()" [disabled]="loading">
+              {{ loading ? 'Registrando...' : 'Registrarse' }}
+            </button>
           </div>
           <div class="check-me m-t-15">
             <h6 class="f-w-400 text-muted m-b-0">¿Ya tienes cuenta?</h6>

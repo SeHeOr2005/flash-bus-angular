@@ -1,0 +1,121 @@
+.roles-container {
+  padding: 24px;
+  max-width: 1100px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    mat-icon { font-size: 28px; width: 28px; height: 28px; color: #4e73df; }
+    h4 { margin: 0; font-size: 20px; font-weight: 600; }
+  }
+
+  p { margin: 4px 0 0; font-size: 13px; }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  gap: 12px;
+  color: #666;
+}
+
+.error-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  gap: 8px;
+  text-align: center;
+
+  mat-icon { font-size: 48px; width: 48px; height: 48px; color: #aaa; }
+  h5 { margin: 0; font-size: 16px; color: #555; }
+}
+
+.error-icon { color: #e53935 !important; }
+
+.roles-table {
+  width: 100%;
+
+  th { font-weight: 600; font-size: 13px; color: #555; }
+  td { font-size: 14px; }
+}
+
+.role-row:hover { background: #f8f9ff; }
+
+.role-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4e73df, #6f86e0);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.role-name {
+  font-weight: 500;
+  font-family: monospace;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.description-text {
+  color: #666;
+  font-size: 13px;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.perm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.perm-badge-empty {
+    background: #f5f5f5;
+    color: #999;
+  }
+
+  .badge-icon { font-size: 14px; width: 14px; height: 14px; }
+}
+
+.actions-row {
+  display: flex;
+  gap: 2px;
+}
+
+.table-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 13px;
+}

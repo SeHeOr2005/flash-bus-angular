@@ -90,6 +90,41 @@
   background-image: url('../../../../../assets/images/layout/img-profile-card.jpg');
 }
 
+// Avatar con iniciales (pequeño, en la barra)
+.user-avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+// Avatar con iniciales (grande, dentro del menú)
+.user-avatar-initials-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
 .dropdown-header,
 .dropdown-body {
   padding: 16px 20px;

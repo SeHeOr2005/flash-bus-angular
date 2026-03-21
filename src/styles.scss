@@ -28,3 +28,19 @@
 
 // grid
 @import './app/@theme/styles/grid';
+
+// Snackbar global styles
+.snack-success .mdc-snackbar__surface {
+  background-color: #2e7d32 !important;
+  color: white !important;
+}
+
+.snack-error .mdc-snackbar__surface {
+  background-color: #c62828 !important;
+  color: white !important;
+}
+
+.snack-warn .mdc-snackbar__surface {
+  background-color: #e65100 !important;
+  color: white !important;
+}

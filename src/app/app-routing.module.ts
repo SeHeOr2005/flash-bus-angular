@@ -4,11 +4,13 @@ import { RouterModule, Routes } from '@angular/router';
 // project import
 import { AdminComponent } from './demo/layout/admin';
 import { EmptyComponent } from './demo/layout/empty';
+import { authGuard } from './@theme/guards/auth.guard';
 
 const routes: Routes = [
   {
     path: '',
     component: AdminComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -38,6 +40,18 @@ const routes: Routes = [
       {
         path: 'sample-page',
         loadComponent: () => import('./demo/pages/other/sample-page/sample-page.component')
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./demo/pages/admin/users/users.component')
+      },
+      {
+        path: 'roles',
+        loadComponent: () => import('./demo/pages/admin/roles/roles.component')
+      },
+      {
+        path: 'permissions',
+        loadComponent: () => import('./demo/pages/admin/permissions/permissions.component')
       }
     ]
   },

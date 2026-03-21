@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { Subject } from 'rxjs';
-import { UserRole, RoleLabels } from 'src/app/@theme/types/roles';
+import { UserRole, getRoleDisplayLabel } from 'src/app/@theme/types/roles';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 
 @Component({
@@ -146,11 +146,11 @@ export class RoleSelectorComponent implements OnDestroy {
 
   getCurrentRoleLabel(): string {
     const activeRole = this.authService.getActiveRole();
-    return activeRole ? RoleLabels[activeRole] : 'Sin rol';
+    return activeRole ? getRoleDisplayLabel(activeRole) : 'Sin rol';
   }
 
   getRoleLabel(role: UserRole): string {
-    return RoleLabels[role];
+    return getRoleDisplayLabel(role);
   }
 
   isActiveRole(role: UserRole): boolean {

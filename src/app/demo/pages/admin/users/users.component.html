@@ -1,0 +1,168 @@
+<div class="users-container">
+  <!-- Encabezado -->
+  <div class="page-header">
+    <div class="header-title">
+      <mat-icon>group</mat-icon>
+      <h4>Gestión de Usuarios</h4>
+    </div>
+    <p class="text-muted">Administra los usuarios del sistema y sus roles</p>
+  </div>
+
+  <!-- Barra de búsqueda -->
+  <app-card class="mb-4">
+    <div class="search-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar usuario</mat-label>
+        <input
+          matInput
+          placeholder="Nombre o correo electrónico..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch($event)"
+        />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="loadUsers()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+  </app-card>
+
+  <!-- Tabla de usuarios -->
+  <app-card>
+    <div *ngIf="loading()" class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando usuarios...</p>
+    </div>
+
+    <div *ngIf="!loading()">
+
+      <!-- Estado de error: sin permisos -->
+      <div *ngIf="errorMessage() === 'Sin permisos'" class="error-state">
+        <mat-icon class="error-icon">lock</mat-icon>
+        <h5>Sin permisos para ver usuarios</h5>
+        <p class="text-muted">Tu usuario no tiene el rol <strong>ADMINISTRADOR_SISTEMA</strong> asignado en la base de datos.</p>
+        <div class="error-steps">
+          <p><strong>Pasos para asignarlo:</strong></p>
+          <ol>
+            <li>Abre Postman o un navegador</li>
+            <li>Llama a <code>GET http://localhost:8080/roles</code> → copia el <code>id</code> del rol <em>ADMINISTRADOR_SISTEMA</em></li>
+            <li>Tu userId está en el JWT (lo puedes ver en <code>localStorage → currentUser → id</code>)</li>
+            <li>Llama a <code>POST http://localhost:8080/user-role/user/&#123;userId&#125;/role/&#123;roleId&#125;</code></li>
+            <li>Cierra sesión e inicia sesión nuevamente</li>
+          </ol>
+        </div>
+        <button mat-flat-button color="primary" (click)="loadUsers()">
+          <mat-icon>refresh</mat-icon> Reintentar
+        </button>
+      </div>
+
+      <!-- Sin conexión al backend -->
+      <div *ngIf="errorMessage() === 'Sin conexión'" class="error-state">
+        <mat-icon class="error-icon warn">wifi_off</mat-icon>
+        <h5>No hay conexión con el backend</h5>
+        <p class="text-muted">Verifica que el servidor Spring Boot esté corriendo en <strong>http://localhost:8080</strong></p>
+        <button mat-flat-button color="primary" (click)="loadUsers()">
+          <mat-icon>refresh</mat-icon> Reintentar
+        </button>
+      </div>
+
+      <!-- Error genérico -->
+      <div *ngIf="errorMessage() === 'Error'" class="error-state">
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <h5>Ocurrió un error inesperado</h5>
+        <button mat-flat-button color="primary" (click)="loadUsers()">
+          <mat-icon>refresh</mat-icon> Reintentar
+        </button>
+      </div>
+
+      <div *ngIf="!errorMessage() && users().length === 0" class="empty-state">
+        <mat-icon>person_off</mat-icon>
+        <h5>No se encontraron usuarios</h5>
+        <p class="text-muted">No hay usuarios registrados en el sistema</p>
+      </div>
+
+      <table mat-table [dataSource]="users()" class="users-table w-100" *ngIf="!errorMessage() && users().length > 0">
+
+        <!-- Columna Nombre -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let user">
+            <div class="user-name-cell">
+              <div class="avatar">{{ user.name?.charAt(0)?.toUpperCase() }}</div>
+              <span>{{ user.name }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Email -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Correo</th>
+          <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+        </ng-container>
+
+        <!-- Columna Estado -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="status-badge" [class.active]="user.status" [class.inactive]="!user.status">
+              {{ user.status ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Columna Roles -->
+        <ng-container matColumnDef="roles">
+          <th mat-header-cell *matHeaderCellDef>Roles</th>
+          <td mat-cell *matCellDef="let user">
+            <div class="roles-cell">
+              <!-- Chips de roles actuales -->
+              <span
+                *ngFor="let ur of user.roles"
+                class="role-chip"
+                [ngClass]="getRoleColor(ur.role?.name)"
+                [class.chip-readonly]="!canRemoveRole()"
+                [matTooltip]="canRemoveRole() ? 'Clic para remover' : ur.role?.name"
+                (click)="canRemoveRole() && removeRole(user, ur.id)"
+              >
+                {{ getRoleLabel(ur.role?.name) }}
+                <mat-icon class="chip-remove" *ngIf="canRemoveRole()">close</mat-icon>
+              </span>
+
+              <!-- Selector para agregar rol -->
+              <ng-container *appHasPermission="{ url: '/user-role', method: 'POST' }">
+                <mat-form-field appearance="outline" class="role-selector"
+                  *ngIf="getRolesNotAssigned(user).length > 0">
+                  <mat-select placeholder="+ Rol" (selectionChange)="assignRole(user, $event.value)">
+                    <mat-option *ngFor="let role of getRolesNotAssigned(user)" [value]="role.id">
+                      {{ getRoleLabel(role.name) }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </ng-container>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Acciones -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let user">
+            <ng-container *appHasPermission="{ url: '/api/users', method: 'DELETE' }">
+              <button mat-icon-button color="warn" matTooltip="Eliminar usuario" (click)="deleteUser(user)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </ng-container>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="user-row"></tr>
+      </table>
+
+      <div class="table-footer" *ngIf="!errorMessage() && users().length > 0">
+        <span class="text-muted">{{ users().length }} usuario(s) encontrado(s)</span>
+      </div>
+    </div>
+  </app-card>
+</div>

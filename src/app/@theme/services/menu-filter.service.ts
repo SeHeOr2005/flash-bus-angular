@@ -3,59 +3,48 @@ import { Navigation } from '../types/navigation';
 import { UserRole } from '../types/roles';
 import { AuthService } from './auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class MenuFilterService {
   constructor(private authService: AuthService) {}
 
-  /**
-   * Filtrar el menú basándose en los roles permitidos
-   */
   filterMenuByRole(menus: Navigation[], activeRole: UserRole | null): Navigation[] {
-    if (!activeRole) {
-      return [];
-    }
-
+    if (!activeRole) return [];
     return menus
       .map(menu => this.filterMenuItem(menu, activeRole))
-      .filter(menu => menu !== null) as Navigation[];
+      .filter((menu): menu is Navigation => menu !== null);
   }
 
-  /**
-   * Filtrar un item del menú recursivamente
-   */
   private filterMenuItem(item: Navigation, activeRole: UserRole): Navigation | null {
-    // Si el item tiene allowedRoles definidos, verificar si el rol actual está incluido
-    if (item.allowedRoles && item.allowedRoles.length > 0) {
-      if (!item.allowedRoles.includes(activeRole)) {
-        return null;
-      }
-    }
 
-    // Si tiene hijos, filtrarlos recursivamente
-    if (item.children && item.children.length > 0) {
+    // ── GRUPOS: filtrar hijos primero, el grupo se muestra si hay al menos uno visible
+    if (item.type === 'group') {
+      if (!item.children || item.children.length === 0) return null;
+
       const filteredChildren = item.children
         .map(child => this.filterMenuItem(child as Navigation, activeRole))
-        .filter(child => child !== null) as Navigation[];
+        .filter((child): child is Navigation => child !== null);
 
-      // Si no quedan hijos después del filtrado, no mostrar el grupo
-      if (item.type === 'group' && filteredChildren.length === 0) {
-        return null;
+      return filteredChildren.length > 0
+        ? { ...item, children: filteredChildren }
+        : null;
+    }
+
+    // ── ITEMS HOJA: verificar rol activo O permiso alternativo
+    if (item.allowedRoles && item.allowedRoles.length > 0) {
+      const hasRole = item.allowedRoles.includes(activeRole);
+
+      if (!hasRole) {
+        // ¿Tiene alguno de los permisos requeridos?
+        const hasPermission = (item.requiredPermissions ?? []).some(
+          p => this.authService.hasPermission(p.url, p.method)
+        );
+        if (!hasPermission) return null;
       }
-
-      return {
-        ...item,
-        children: filteredChildren
-      };
     }
 
     return item;
   }
 
-  /**
-   * Obtener menús visibles para el rol actual
-   */
   getVisibleMenus(allMenus: Navigation[]): Navigation[] {
     const activeRole = this.authService.getActiveRole();
     return this.filterMenuByRole(allMenus, activeRole);

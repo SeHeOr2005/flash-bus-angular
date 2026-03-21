@@ -1,0 +1,109 @@
+<div class="roles-container">
+
+  <!-- Encabezado -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-title">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <h4>Gestión de Roles</h4>
+      </div>
+      <p class="text-muted">Administra los roles del sistema y sus permisos de acceso</p>
+    </div>
+    <ng-container *appHasPermission="{ url: '/roles', method: 'POST' }">
+      <button mat-flat-button color="primary" (click)="openRoleForm()">
+        <mat-icon>add</mat-icon>
+        Nuevo Rol
+      </button>
+    </ng-container>
+  </div>
+
+  <app-card>
+
+    <div *ngIf="loading()" class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando roles...</p>
+    </div>
+
+    <div *ngIf="!loading() && errorMessage()" class="error-state">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h5>{{ errorMessage() }}</h5>
+      <button mat-flat-button color="primary" (click)="loadAll()">
+        <mat-icon>refresh</mat-icon> Reintentar
+      </button>
+    </div>
+
+    <div *ngIf="!loading() && !errorMessage() && roles().length === 0" class="empty-state">
+      <mat-icon>shield</mat-icon>
+      <h5>No hay roles registrados</h5>
+    </div>
+
+    <table mat-table [dataSource]="roles()" class="roles-table w-100"
+           *ngIf="!loading() && !errorMessage() && roles().length > 0">
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Rol</th>
+        <td mat-cell *matCellDef="let role">
+          <div class="role-name-cell">
+            <div class="role-avatar">{{ role.name?.charAt(0) }}</div>
+            <span class="role-name">{{ role.name }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Descripción</th>
+        <td mat-cell *matCellDef="let role">
+          <span class="description-text">{{ role.description || '—' }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="permissions">
+        <th mat-header-cell *matHeaderCellDef>Permisos</th>
+        <td mat-cell *matCellDef="let role">
+          <span class="perm-badge" [class.perm-badge-empty]="getPermCount(role.id) === 0">
+            <mat-icon class="badge-icon">vpn_key</mat-icon>
+            {{ getPermCount(role.id) }} permiso(s)
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let role">
+          <div class="actions-row">
+            <!-- Gestionar permisos -->
+            <ng-container *appHasPermission="[
+              { url: '/role-permission', method: 'GET' },
+              { url: '/role-permission', method: 'POST' },
+              { url: '/role-permission', method: 'DELETE' }]">
+              <button mat-icon-button color="primary"
+                      matTooltip="Gestionar permisos"
+                      (click)="openPermissions(role)">
+                <mat-icon>vpn_key</mat-icon>
+              </button>
+            </ng-container>
+            <!-- Editar -->
+            <ng-container *appHasPermission="{ url: '/roles', method: 'PUT' }">
+              <button mat-icon-button matTooltip="Editar rol" (click)="openRoleForm(role)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </ng-container>
+            <!-- Eliminar -->
+            <ng-container *appHasPermission="{ url: '/roles', method: 'DELETE' }">
+              <button mat-icon-button color="warn" matTooltip="Eliminar rol" (click)="deleteRole(role)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </ng-container>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="role-row"></tr>
+    </table>
+
+    <div class="table-footer" *ngIf="!loading() && !errorMessage() && roles().length > 0">
+      <span class="text-muted">{{ roles().length }} rol(es) en el sistema</span>
+    </div>
+  </app-card>
+</div>

@@ -1,31 +1,34 @@
 <ng-scrollbar style="height: calc(100vh - 88px)" visibility="hover" orientation="vertical">
   <app-card [showHeader]="false" cardClass="user-card" [padding]="20">
-    <div class="flex align-items-center">
-      <div class="flex-shrink-0">
-        <img src="assets/images/user/avatar-1.jpg" alt="user-image" class="user-avatar" />
-      </div>
-      <div class="flex-grow-1 user-details">
-        <h6>Jonh Smith</h6>
-        <small>Administrator</small>
-      </div>
-      <div class="user-setting">
-        <a href="javascript:" [matMenuTriggerFor]="menu" class="text-muted">
-          <svg class="pc-icon">
-            <use xlink:href="assets/fonts/custom-icon.svg#custom-sort-outline"></use>
-          </svg>
-        </a>
-        <mat-menu #menu="matMenu" [overlapTrigger]="false" yPosition="below" xPosition="after">
-          @for (list of accountList; track $index) {
-            <button mat-menu-item>
+    <ng-container *ngIf="currentUser$ | async as user">
+      <div class="flex align-items-center">
+        <!-- Avatar con iniciales -->
+        <div class="flex-shrink-0 sidebar-avatar">
+          {{ getInitials(user.name) }}
+        </div>
+        <!-- Nombre y rol -->
+        <div class="flex-grow-1 user-details">
+          <h6 class="user-name-sidebar">{{ user.name }}</h6>
+          <small class="user-role-badge">{{ getActiveRoleLabel() }}</small>
+        </div>
+        <!-- Menú de opciones -->
+        <div class="user-setting">
+          <a href="javascript:" [matMenuTriggerFor]="menu" class="text-muted">
+            <svg class="pc-icon">
+              <use xlink:href="assets/fonts/custom-icon.svg#custom-sort-outline"></use>
+            </svg>
+          </a>
+          <mat-menu #menu="matMenu" [overlapTrigger]="false" yPosition="below" xPosition="after">
+            <button mat-menu-item (click)="logout()">
               <a href="javascript:" class="text-muted">
-                <i class="{{ list.icon }} f-18 m-r-10"></i>
-                <span class="mat-body">{{ list.title }}</span>
+                <i class="ti ti-power f-18 m-r-10"></i>
+                <span class="mat-body">Cerrar sesión</span>
               </a>
             </button>
-          }
-        </mat-menu>
+          </mat-menu>
+        </div>
       </div>
-    </div>
+    </ng-container>
   </app-card>
   <div class="navbar-content">
     <ul class="nav coded-inner-navbar" (click)="fireOutClick()" (keydown)="fireOutClick()" tabindex="0">

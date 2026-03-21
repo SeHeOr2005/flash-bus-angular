@@ -29,14 +29,14 @@
           <div class="text-start">
             <label for="name" class="f-w-500">Ingresa tu correo</label>
             <mat-form-field appearance="outline" class="w-100 m-t-5">
-              <input matInput [formControl]="email" required placeholder="Correo electrónico" [(ngModel)]="Email" />
+              <input matInput [formControl]="email" required placeholder="Correo electrónico" [(ngModel)]="emailValue" />
               @if (email.invalid) {
                 <mat-error>{{ getErrorMessage() }}</mat-error>
               }
             </mat-form-field>
             <label for="name" class="f-w-500">Ingresa tu contraseña</label>
             <mat-form-field appearance="outline" class="w-100 m-t-5">
-              <input matInput [type]="hide ? 'password' : 'text'" placeholder="Contraseña" [(ngModel)]="password" />
+              <input matInput [type]="hide ? 'password' : 'text'" placeholder="Contraseña" [(ngModel)]="password" (keyup.enter)="onLogin()" />
               <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="hide">
                 <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
@@ -46,8 +46,13 @@
             <mat-checkbox class="float-start" checked color="primary">¿Recuérdame?</mat-checkbox>
             <a class="f-w-400 f-14 text-primary-500 m-b-0" href="javascript:">¿Olvidaste tu contraseña?</a>
           </div>
+          @if (errorMessage) {
+            <p class="text-danger text-center m-t-10">{{ errorMessage }}</p>
+          }
           <div class="grid">
-            <button mat-flat-button color="primary" class="b-rad-20 m-t-15">Iniciar sesión</button>
+            <button mat-flat-button color="primary" class="b-rad-20 m-t-15" (click)="onLogin()" [disabled]="loading">
+              {{ loading ? 'Iniciando sesión...' : 'Iniciar sesión' }}
+            </button>
           </div>
           <div class="check-me m-t-20">
             <h6 class="f-w-400 text-muted m-b-0">¿No tienes cuenta?</h6>

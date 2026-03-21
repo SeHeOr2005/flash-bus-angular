@@ -1,6 +1,7 @@
 // Angular import
 import { Component, inject, input } from '@angular/core';
 import { CommonModule, Location, LocationStrategy } from '@angular/common';
+import { Router } from '@angular/router';
 
 // project import
 import { NavigationItem } from 'src/app/@theme/types/navigation';
@@ -8,6 +9,8 @@ import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { MenuItemComponent } from './menu-item/menu-item.component';
 import { MenuCollapseComponent } from './menu-collapse/menu-collapse.component';
 import { MenuGroupVerticalComponent } from './menu-group/menu-group.component';
+import { AuthService } from 'src/app/@theme/services/auth.service';
+import { getRoleDisplayLabel, UserRole } from 'src/app/@theme/types/roles';
 
 @Component({
   selector: 'app-vertical-menu',
@@ -18,9 +21,31 @@ import { MenuGroupVerticalComponent } from './menu-group/menu-group.component';
 export class VerticalMenuComponent {
   private location = inject(Location);
   private locationStrategy = inject(LocationStrategy);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   // public props
   menus = input.required<NavigationItem[]>();
+  currentUser$ = this.authService.currentUser$;
+
+  getActiveRoleLabel(): string {
+    const role = this.authService.getActiveRole();
+    return role ? getRoleDisplayLabel(role) : 'Sin rol';
+  }
+
+  getInitials(name: string | undefined): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map((n) => n.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('');
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
+  }
 
   // public method
   fireOutClick() {
@@ -47,23 +72,4 @@ export class VerticalMenuComponent {
       }
     }
   }
-
-  accountList = [
-    {
-      icon: 'ti ti-user',
-      title: 'My Account'
-    },
-    {
-      icon: 'ti ti-settings',
-      title: 'Settings'
-    },
-    {
-      icon: 'ti ti-lock',
-      title: 'Lock Screen'
-    },
-    {
-      icon: 'ti ti-power',
-      title: 'Logout'
-    }
-  ];
 }

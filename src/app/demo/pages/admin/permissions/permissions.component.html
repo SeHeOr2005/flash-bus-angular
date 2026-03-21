@@ -1,0 +1,109 @@
+<div class="permissions-container">
+
+  <!-- Encabezado -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-title">
+        <mat-icon>vpn_key</mat-icon>
+        <h4>Gestión de Permisos</h4>
+      </div>
+      <p class="text-muted">Define los endpoints protegidos y controla el acceso por método HTTP</p>
+    </div>
+    <ng-container *appHasPermission="{ url: '/permissions', method: 'POST' }">
+      <button mat-flat-button color="primary" (click)="openPermissionForm()">
+        <mat-icon>add</mat-icon>
+        Nuevo Permiso
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Barra de búsqueda -->
+  <app-card class="mb-4">
+    <div class="search-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar permiso</mat-label>
+        <input matInput placeholder="URL, método o módulo..."
+               [(ngModel)]="searchQuery"
+               (ngModelChange)="onSearch($event)" />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <button mat-flat-button color="accent" (click)="loadPermissions()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+  </app-card>
+
+  <!-- Tabla -->
+  <app-card>
+
+    <div *ngIf="loading()" class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando permisos...</p>
+    </div>
+
+    <div *ngIf="!loading() && errorMessage()" class="error-state">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h5>{{ errorMessage() }}</h5>
+      <button mat-flat-button color="primary" (click)="loadPermissions()">
+        <mat-icon>refresh</mat-icon> Reintentar
+      </button>
+    </div>
+
+    <div *ngIf="!loading() && !errorMessage() && filtered().length === 0" class="empty-state">
+      <mat-icon>lock_open</mat-icon>
+      <h5>No se encontraron permisos</h5>
+      <p class="text-muted">{{ searchQuery ? 'Prueba con otra búsqueda' : 'Crea el primer permiso' }}</p>
+    </div>
+
+    <table mat-table [dataSource]="filtered()" class="perms-table w-100"
+           *ngIf="!loading() && !errorMessage() && filtered().length > 0">
+
+      <ng-container matColumnDef="method">
+        <th mat-header-cell *matHeaderCellDef>Método</th>
+        <td mat-cell *matCellDef="let perm">
+          <span class="method-badge" [ngClass]="methodClass(perm.method)">{{ perm.method }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="url">
+        <th mat-header-cell *matHeaderCellDef>Endpoint</th>
+        <td mat-cell *matCellDef="let perm">
+          <code class="endpoint-code">{{ perm.url }}</code>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="model">
+        <th mat-header-cell *matHeaderCellDef>Módulo</th>
+        <td mat-cell *matCellDef="let perm">
+          <span class="model-tag">{{ perm.model }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let perm">
+          <div class="actions-row">
+            <ng-container *appHasPermission="{ url: '/permissions', method: 'PUT' }">
+              <button mat-icon-button matTooltip="Editar" (click)="openPermissionForm(perm)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </ng-container>
+            <ng-container *appHasPermission="{ url: '/permissions', method: 'DELETE' }">
+              <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="deletePermission(perm)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </ng-container>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="perm-row"></tr>
+    </table>
+
+    <div class="table-footer" *ngIf="!loading() && !errorMessage() && filtered().length > 0">
+      <span class="text-muted">{{ filtered().length }} permiso(s) encontrado(s)</span>
+    </div>
+  </app-card>
+</div>

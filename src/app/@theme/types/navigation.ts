@@ -18,7 +18,13 @@ export interface NavigationItem {
     type?: string;
   };
   children?: Navigation[];
-  allowedRoles?: string[]; // Roles permitidos para ver este item
+  /** Roles que pueden ver este item (se verifica el rol ACTIVO) */
+  allowedRoles?: string[];
+  /**
+   * Permisos alternativos: si el usuario tiene CUALQUIERA de estos permisos
+   * el item es visible aunque no tenga el rol en allowedRoles.
+   */
+  requiredPermissions?: { url: string; method: string }[];
 }
 
 export interface Navigation extends NavigationItem {

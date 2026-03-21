@@ -195,7 +195,28 @@ export const menus: Navigation[] = [
         classes: 'nav-item',
         url: '/users',
         icon: '#custom-profile-2user-outline',
-        allowedRoles: [UserRole.ADMIN_SISTEMA]
+        allowedRoles: [UserRole.ADMIN_SISTEMA],
+        requiredPermissions: [{ url: '/api/users', method: 'GET' }]
+      },
+      {
+        id: 'roles',
+        title: 'Roles',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/roles',
+        icon: '#custom-shield',
+        allowedRoles: [UserRole.ADMIN_SISTEMA],
+        requiredPermissions: [{ url: '/roles', method: 'GET' }]
+      },
+      {
+        id: 'permissions',
+        title: 'Permisos',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/permissions',
+        icon: '#custom-password-check',
+        allowedRoles: [UserRole.ADMIN_SISTEMA],
+        requiredPermissions: [{ url: '/permissions', method: 'GET' }]
       },
       {
         id: 'companies',

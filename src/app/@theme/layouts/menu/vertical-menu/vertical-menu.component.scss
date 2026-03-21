@@ -3,3 +3,43 @@
 .w-50 {
   width: 50%;
 }
+
+// Avatar circular con iniciales en el sidebar
+.sidebar-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  user-select: none;
+  margin-right: 10px;
+}
+
+// Nombre del usuario en el sidebar
+.user-name-sidebar {
+  margin: 0 0 2px 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+// Badge del rol activo
+.user-role-badge {
+  font-size: 11px;
+  color: #1976d2;
+  font-weight: 500;
+  background: #e3f2fd;
+  padding: 1px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
