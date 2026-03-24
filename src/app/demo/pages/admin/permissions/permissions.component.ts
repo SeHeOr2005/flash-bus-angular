@@ -16,6 +16,7 @@ import { lastValueFrom } from 'rxjs';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { RoleService, BackendPermission } from 'src/app/@theme/services/role.service';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -116,7 +117,7 @@ export class PermissionFormDialogComponent {
     MatTableModule, MatButtonModule, MatIconModule, MatInputModule,
     MatFormFieldModule, MatProgressSpinnerModule, MatSnackBarModule,
     MatTooltipModule, MatDialogModule,
-    HasPermissionDirective
+    HasPermissionDirective, ConfirmDialogComponent
   ],
   templateUrl: './permissions.component.html',
   styleUrls: ['./permissions.component.scss']
@@ -186,14 +187,25 @@ export default class PermissionsComponent implements OnInit {
   }
 
   deletePermission(perm: BackendPermission): void {
-    if (!confirm(`¿Eliminar el permiso "${perm.method} ${perm.url}"?`)) return;
-    this.roleService.deletePermission(perm.id).subscribe({
-      next: () => {
-        this.permissions.update(l => l.filter(p => p.id !== perm.id));
-        this.filtered.update(l => l.filter(p => p.id !== perm.id));
-        this.snackBar.open('Permiso eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Eliminar permiso',
+        message: `¿Estás seguro de que deseas eliminar el permiso <strong>${perm.method} ${perm.url}</strong>?`,
+        detail: 'Esta acción no se puede deshacer.'
       },
-      error: () => this.snackBar.open('Error al eliminar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      width: '420px'
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.roleService.deletePermission(perm.id).subscribe({
+        next: () => {
+          this.permissions.update(l => l.filter(p => p.id !== perm.id));
+          this.filtered.update(l => l.filter(p => p.id !== perm.id));
+          this.snackBar.open('Permiso eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: () => this.snackBar.open('Error al eliminar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      });
     });
   }
 

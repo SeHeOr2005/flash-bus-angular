@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { BehaviorSubject, Observable, switchMap, map, forkJoin, of } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap, map, forkJoin } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { User, UserRole, UserPermission, getRoleDisplayLabel } from '../types/roles';
 import { environment } from 'src/environments/environment';
@@ -12,6 +12,7 @@ interface BackendUserRole {
 
 interface BackendRolePermission {
   id: string;
+  role: { id: string; name: string };
   permission: { id: string; url: string; method: string; model: string };
 }
 
@@ -49,41 +50,34 @@ export class AuthService {
         const payload = this.decodeJwtPayload(token);
         const userId  = payload['id'] as string;
 
-        // 1) Obtener roles del usuario
-        return this.http.get<BackendUserRole[]>(`${this.API}/user-role/user/${userId}`).pipe(
-          switchMap((userRoles) => {
+        // Ambas llamadas en paralelo: roles del usuario + todos los role-permissions
+        return forkJoin({
+          userRoles: this.http.get<BackendUserRole[]>(`${this.API}/user-role/user/${userId}`),
+          allRolePerms: this.http.get<BackendRolePermission[]>(`${this.API}/role-permission`)
+        }).pipe(
+          map(({ userRoles, allRolePerms }) => {
             const roles = userRoles.map(ur => this.mapRole(ur.role?.name));
+            const userRoleIds = new Set(userRoles.map(ur => ur.role?.id).filter(Boolean));
 
-            // 2) Cargar permisos de cada rol en paralelo
-            const permObs = userRoles.length > 0
-              ? forkJoin(userRoles.map(ur =>
-                  this.http.get<BackendRolePermission[]>(`${this.API}/role-permission/role/${ur.role.id}`)
-                ))
-              : of([] as BackendRolePermission[][]);
+            const permissions: UserPermission[] = allRolePerms
+              .filter(rp => userRoleIds.has(rp.role?.id))
+              .map(rp => ({ url: rp.permission?.url, method: rp.permission?.method }))
+              .filter(p => !!p.url && !!p.method);
 
-            return permObs.pipe(
-              map((permResults) => {
-                const permissions: UserPermission[] = (permResults as BackendRolePermission[][])
-                  .flat()
-                  .map(rp => ({ url: rp.permission?.url, method: rp.permission?.method }))
-                  .filter(p => !!p.url && !!p.method);
+            const user: User = {
+              id:         userId,
+              name:       payload['name']  as string,
+              email:      payload['email'] as string,
+              roles:      roles.length > 0 ? roles : [UserRole.CIUDADANO],
+              activeRole: roles.length > 0 ? roles[0] : UserRole.CIUDADANO,
+              permissions
+            };
 
-                const user: User = {
-                  id:          userId,
-                  name:        payload['name']  as string,
-                  email:       payload['email'] as string,
-                  roles:       roles.length > 0 ? roles : [UserRole.CIUDADANO],
-                  activeRole:  roles.length > 0 ? roles[0] : UserRole.CIUDADANO,
-                  permissions
-                };
-
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                localStorage.setItem('activeRole', user.activeRole);
-                this.currentUserSubject.next(user);
-                this.activeRole.set(user.activeRole);
-                return user;
-              })
-            );
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            localStorage.setItem('activeRole', user.activeRole);
+            this.currentUserSubject.next(user);
+            this.activeRole.set(user.activeRole);
+            return user;
           })
         );
       })

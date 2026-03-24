@@ -33,6 +33,14 @@ export class VerticalMenuComponent {
     return role ? getRoleDisplayLabel(role) : 'Sin rol';
   }
 
+  getDisplayRoles(): string[] {
+    const user = this.authService.getCurrentUser();
+    if (!user?.roles?.length) return ['Sin rol'];
+    const otherRoles = user.roles.filter(r => r !== UserRole.CIUDADANO);
+    const rolesToShow = otherRoles.length > 0 ? otherRoles : [UserRole.CIUDADANO];
+    return rolesToShow.map(r => getRoleDisplayLabel(r));
+  }
+
   getInitials(name: string | undefined): string {
     if (!name) return '?';
     return name

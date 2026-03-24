@@ -33,7 +33,15 @@
   max-width: 120px;
 }
 
-// Badge del rol activo
+// Contenedor de badges de roles
+.user-roles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+// Badge de cada rol
 .user-role-badge {
   font-size: 11px;
   color: #1976d2;

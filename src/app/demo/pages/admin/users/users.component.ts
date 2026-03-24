@@ -11,13 +11,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged, Subject, lastValueFrom } from 'rxjs';
 
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { UserService, BackendUser, BackendRole, BackendUserRole } from 'src/app/@theme/services/user.service';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 export interface UserRow extends BackendUser {
   roles: BackendUserRole[];
@@ -42,7 +43,8 @@ export interface UserRow extends BackendUser {
     MatTooltipModule,
     MatSelectModule,
     MatDialogModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    ConfirmDialogComponent
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss']
@@ -51,10 +53,10 @@ export default class UsersComponent implements OnInit {
   private userService   = inject(UserService);
   private authService   = inject(AuthService);
   private snackBar      = inject(MatSnackBar);
+  private dialog        = inject(MatDialog);
 
   displayedColumns = ['name', 'email', 'status', 'roles', 'actions'];
 
-  // Signals — garantizan actualización de la vista sin depender de zones
   users = signal<UserRow[]>([]);
   allRoles = signal<BackendRole[]>([]);
   loading = signal(false);
@@ -151,13 +153,24 @@ export default class UsersComponent implements OnInit {
   }
 
   deleteUser(user: UserRow): void {
-    if (!confirm(`¿Deseas eliminar al usuario ${user.name}?`)) return;
-    this.userService.deleteUser(user.id).subscribe({
-      next: () => {
-        this.users.update((list) => list.filter((u) => u.id !== user.id));
-        this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Eliminar usuario',
+        message: `¿Estás seguro de que deseas eliminar a <strong>${user.name}</strong>?`,
+        detail: 'Esta acción no se puede deshacer.'
       },
-      error: () => this.snackBar.open('Error al eliminar el usuario', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      width: '420px'
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.userService.deleteUser(user.id).subscribe({
+        next: () => {
+          this.users.update((list) => list.filter((u) => u.id !== user.id));
+          this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: () => this.snackBar.open('Error al eliminar el usuario', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      });
     });
   }
 

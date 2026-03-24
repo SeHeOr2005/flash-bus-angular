@@ -65,6 +65,10 @@ export class RoleService {
   }
 
   // ── Permisos de un Rol ─────────────────────────────────────────────────────
+  getAllRolePermissions(): Observable<BackendRolePermission[]> {
+    return this.http.get<BackendRolePermission[]>(`${this.API}/role-permission`);
+  }
+
   getRolePermissions(roleId: string): Observable<BackendRolePermission[]> {
     return this.http.get<BackendRolePermission[]>(`${this.API}/role-permission/role/${roleId}`);
   }

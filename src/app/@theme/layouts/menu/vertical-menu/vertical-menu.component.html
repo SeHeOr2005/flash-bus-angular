@@ -9,7 +9,9 @@
         <!-- Nombre y rol -->
         <div class="flex-grow-1 user-details">
           <h6 class="user-name-sidebar">{{ user.name }}</h6>
-          <small class="user-role-badge">{{ getActiveRoleLabel() }}</small>
+          <div class="user-roles-list">
+            <small class="user-role-badge" *ngFor="let label of getDisplayRoles()">{{ label }}</small>
+          </div>
         </div>
         <!-- Menú de opciones -->
         <div class="user-setting">

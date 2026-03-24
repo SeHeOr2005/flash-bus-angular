@@ -4,6 +4,7 @@ import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationErr
 
 // project import
 import { SharedModule } from './demo/shared/shared.module';
+import { AuthService } from './@theme/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -13,12 +14,14 @@ import { SharedModule } from './demo/shared/shared.module';
 })
 export class AppComponent {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   // public props
   isSpinnerVisible = true;
 
   // constructor
   constructor() {
+    this.authService.logout();
     this.router.events.subscribe(
       (event) => {
         if (event instanceof NavigationStart) {

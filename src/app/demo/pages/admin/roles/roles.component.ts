@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, Inject } from '@angular/core';
+import { Component, inject, signal, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -22,6 +22,7 @@ import { BackendRole } from 'src/app/@theme/services/user.service';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 import { UserRole } from 'src/app/@theme/types/roles';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 // ── Dialog: Crear / Editar Rol ──────────────────────────────────────────────
 @Component({
@@ -265,22 +266,19 @@ export class RolePermissionsDialogComponent implements OnInit {
     MatTableModule, MatButtonModule, MatIconModule, MatInputModule,
     MatFormFieldModule, MatChipsModule, MatProgressSpinnerModule,
     MatSnackBarModule, MatTooltipModule, MatDialogModule, MatBadgeModule,
-    HasPermissionDirective
+    HasPermissionDirective, ConfirmDialogComponent
   ],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss']
 })
 export default class RolesComponent implements OnInit {
   private roleService  = inject(RoleService);
-  private authService  = inject(AuthService);
   private snackBar     = inject(MatSnackBar);
   private dialog       = inject(MatDialog);
 
   displayedColumns = ['name', 'description', 'permissions', 'actions'];
 
   roles            = signal<(BackendRole & { permCount: number })[]>([]);
-  allPermissions   = signal<BackendPermission[]>([]);
-  rolePermissions  = signal<Map<string, BackendRolePermission[]>>(new Map());
   loading          = signal(false);
   errorMessage     = signal('');
 
@@ -292,15 +290,19 @@ export default class RolesComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
     try {
-      const roles = await lastValueFrom(this.roleService.getRoles());
-      // Cargar permisos de cada rol en paralelo
-      const permResults = await Promise.all(
-        roles.map(r => lastValueFrom(this.roleService.getRolePermissions(r.id)))
-      );
-      const map = new Map<string, BackendRolePermission[]>();
-      roles.forEach((r, i) => map.set(r.id, permResults[i]));
-      this.rolePermissions.set(map);
-      this.roles.set(roles.map(r => ({ ...r, permCount: (permResults[roles.indexOf(r)] ?? []).length })));
+      // 2 llamadas en paralelo en vez de 1 + N
+      const [roles, allRolePerms] = await Promise.all([
+        lastValueFrom(this.roleService.getRoles()),
+        lastValueFrom(this.roleService.getAllRolePermissions())
+      ]);
+
+      const countByRole = new Map<string, number>();
+      allRolePerms.forEach(rp => {
+        const rid = rp.role?.id;
+        if (rid) countByRole.set(rid, (countByRole.get(rid) ?? 0) + 1);
+      });
+
+      this.roles.set(roles.map(r => ({ ...r, permCount: countByRole.get(r.id) ?? 0 })));
       this.loading.set(false);
     } catch {
       this.loading.set(false);
@@ -336,17 +338,34 @@ export default class RolesComponent implements OnInit {
       this.snackBar.open('Primero remueve todos los permisos del rol', 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
       return;
     }
-    if (!confirm(`¿Eliminar el rol "${role.name}"? Esta acción no se puede deshacer.`)) return;
-    this.roleService.deleteRole(role.id).subscribe({
-      next: () => { this.roles.update(l => l.filter(r => r.id !== role.id)); this.snackBar.open('Rol eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); },
-      error: (err) => {
-        const msg = err.status === 400 ? 'No se puede eliminar: hay usuarios con este rol asignado' : 'Error al eliminar el rol';
-        this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
-      }
+
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Eliminar rol',
+        message: `¿Estás seguro de que deseas eliminar el rol <strong>${role.name}</strong>?`,
+        detail: 'Esta acción no se puede deshacer.'
+      },
+      width: '420px'
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.roleService.deleteRole(role.id).subscribe({
+        next: () => {
+          this.roles.update(l => l.filter(r => r.id !== role.id));
+          this.snackBar.open('Rol eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: (err) => {
+          const msg = err.status === 400
+            ? 'No se puede eliminar: hay usuarios con este rol asignado'
+            : 'Error al eliminar el rol';
+          this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
+        }
+      });
     });
   }
 
   getPermCount(roleId: string): number {
-    return this.rolePermissions().get(roleId)?.length ?? 0;
+    return this.roles().find(r => r.id === roleId)?.permCount ?? 0;
   }
 }
