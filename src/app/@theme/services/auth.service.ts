@@ -1,10 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable, switchMap, map, forkJoin, of, from, catchError, throwError } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { User, UserRole, UserPermission } from '../types/roles';
 import { environment } from 'src/environments/environment';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth';
+import { SKIP_AUTH_401_REDIRECT } from '../interceptors/auth-context.tokens';
 
 interface BackendUserRole {
   id: string;
@@ -40,6 +41,7 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   public activeRole = signal<UserRole | null>(this.loadActiveRoleFromStorage());
   private firebaseAuth: Auth | null = null;
+  private trustedToken: string | null = this.getStoredTokenIfValid();
 
   private http = inject(HttpClient);
   private readonly API = environment.apiUrl;
@@ -50,6 +52,67 @@ export class AuthService {
 
   getActiveRole(): UserRole | null {
     return this.activeRole();
+  }
+
+  hasStoredToken(): boolean {
+    return Boolean(localStorage.getItem('token'));
+  }
+
+  /**
+   * Se ejecuta en interacción de usuario (click) para detectar manipulación
+   * del token en localStorage sin esperar navegación o request al backend.
+   */
+  assertSessionIntegrityOnInteraction(): boolean {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      if (this.currentUserSubject.value) {
+        this.logout();
+        return false;
+      }
+      this.trustedToken = null;
+      return true;
+    }
+
+    if (!this.isTokenStructurallyValid(token)) {
+      this.logout();
+      return false;
+    }
+
+    if (this.trustedToken && token !== this.trustedToken) {
+      this.logout();
+      return false;
+    }
+
+    if (!this.trustedToken) {
+      this.trustedToken = token;
+    }
+
+    return true;
+  }
+
+  validateStoredSession(): Observable<boolean> {
+    const token = localStorage.getItem('token');
+    if (!token || !this.isTokenStructurallyValid(token)) {
+      this.logout();
+      return of(false);
+    }
+
+    if (this.trustedToken && token !== this.trustedToken) {
+      this.logout();
+      return of(false);
+    }
+
+    return this.http.get(`${this.API}/security/me`).pipe(
+      map(() => true),
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          this.logout();
+          return of(false);
+        }
+        return of(true);
+      })
+    );
   }
 
   setActiveRole(role: UserRole): void {
@@ -116,6 +179,30 @@ export class AuthService {
     );
   }
 
+  loginWithMicrosoft(): Observable<User> {
+    const auth = this.getFirebaseAuth();
+    const provider = new OAuthProvider('microsoft.com');
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    return from(signInWithPopup(auth, provider)).pipe(
+      switchMap(async ({ user: firebaseUser }) => ({
+        idToken: await firebaseUser.getIdToken()
+      })),
+      switchMap(({ idToken }) =>
+        this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
+          firebaseIdToken: idToken
+        })
+      ),
+      switchMap((response) => {
+        const token = this.extractBackendToken(response);
+        if (!token) {
+          throw new Error('El backend no devolvio un token JWT en la sincronizacion Microsoft.');
+        }
+        return this.hydrateSessionFromOAuthResponse(response, token);
+      })
+    );
+  }
+
   updateProfile(name: string, email: string, password: string): Observable<User> {
     const user = this.currentUserSubject.value;
     if (!user) throw new Error('No hay usuario autenticado');
@@ -141,6 +228,7 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('activeRole');
     localStorage.removeItem('token');
+    this.trustedToken = null;
     this.currentUserSubject.next(null);
     this.activeRole.set(null);
   }
@@ -178,13 +266,33 @@ export class AuthService {
     return localStorage.getItem('activeRole') as UserRole | null;
   }
 
+  private getStoredTokenIfValid(): string | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    return this.isTokenStructurallyValid(token) ? token : null;
+  }
+
   private decodeJwtPayload(token: string): Record<string, unknown> {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(base64));
   }
 
+  private isTokenStructurallyValid(token: string): boolean {
+    try {
+      const payload = this.decodeJwtPayload(token);
+      const exp = payload['exp'];
+      if (typeof exp !== 'number') {
+        return false;
+      }
+      return exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
   private hydrateSessionFromBackendToken(token: string): Observable<User> {
     localStorage.setItem('token', token);
+    this.trustedToken = token;
     const payload = this.decodeJwtPayload(token);
     const userId = payload['id'] as string;
 
@@ -210,6 +318,7 @@ export class AuthService {
 
   private hydrateSessionFromOAuthResponse(response: GoogleSyncResponse, token: string): Observable<User> {
     localStorage.setItem('token', token);
+    this.trustedToken = token;
 
     const payload = this.decodeJwtPayload(token);
     const oauthUser = response.user;
@@ -246,7 +355,11 @@ export class AuthService {
   }
 
   private loadRolesAndPermissionsByUserId(userId: string): Observable<{ roles: UserRole[]; permissions: UserPermission[] }> {
-    return this.http.get<BackendUserRole[]>(`${this.API}/user-role/user/${userId}`).pipe(
+    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+
+    return this.http.get<BackendUserRole[]>(`${this.API}/user-role/user/${userId}`, {
+      context: allowLocal401Handling
+    }).pipe(
       switchMap((userRoles) => {
         const roles = userRoles.map((ur) => this.mapRole(ur.role?.name));
         const permObs = userRoles.length > 0
@@ -304,7 +417,7 @@ export class AuthService {
     if (this.firebaseAuth) return this.firebaseAuth;
 
     if (!this.isFirebaseConfigured()) {
-      throw new Error('Firebase no configurado. Completa environment.firebase antes de usar OAuth con Google.');
+      throw new Error('Firebase no configurado. Completa environment.firebase antes de usar OAuth social.');
     }
 
     const app = getApps().length ? getApps()[0] : initializeApp(environment.firebase);

@@ -16,8 +16,8 @@
                 <button
                   mat-stroked-button
                   class="m-t-10 text-muted"
-                  (click)="list.alt === 'google' ? onGoogleRegister() : null"
-                  [disabled]="loading || socialLoading || list.alt !== 'google'"
+                  (click)="onSocialRegister(list.alt)"
+                  [disabled]="loading || socialLoading || list.alt === 'github'"
                 >
                   <div class="flex">
                     <img src="{{ list.image }}" alt="{{ list.alt }}" />

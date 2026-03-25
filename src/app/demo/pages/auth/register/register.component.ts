@@ -9,6 +9,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/@theme/services/auth.service';
+import { Observable } from 'rxjs';
+import { User } from 'src/app/@theme/types/roles';
 
 @Component({
   selector: 'app-register',
@@ -74,17 +76,34 @@ export default class RegisterComponent {
   }
 
   onGoogleRegister() {
+    this.onSocialRegister('google');
+  }
+
+  onMicrosoftRegister() {
+    this.onSocialRegister('microsoft');
+  }
+
+  onSocialRegister(provider: string) {
+    if (provider === 'github') {
+      return;
+    }
+
     this.socialLoading = true;
     this.errorMessage = '';
     this.cdr.markForCheck();
-    this.authService.loginWithGoogle().subscribe({
+
+    const request$: Observable<User> = provider === 'microsoft'
+      ? this.authService.loginWithMicrosoft()
+      : this.authService.loginWithGoogle();
+
+    request$.subscribe({
       next: () => {
         this.socialLoading = false;
         this.cdr.markForCheck();
         this.router.navigate(['/dashboard']);
       },
       error: (error: unknown) => {
-        this.errorMessage = this.getGoogleAuthErrorMessage(error);
+        this.errorMessage = this.getSocialAuthErrorMessage(error, provider);
         this.snackBar.open(this.errorMessage, 'Cerrar', {
           duration: 5000,
           panelClass: ['snack-error'],
@@ -97,19 +116,22 @@ export default class RegisterComponent {
     });
   }
 
-  private getGoogleAuthErrorMessage(error: unknown): string {
+  private getSocialAuthErrorMessage(error: unknown, provider: string): string {
+    const providerLabel = provider === 'microsoft' ? 'Microsoft' : 'Google';
     const firebaseCode = (error as { code?: string } | null)?.code;
-    if (firebaseCode === 'auth/popup-closed-by-user') return 'Cerraste la ventana de Google antes de completar el registro.';
-    if (firebaseCode === 'auth/popup-blocked') return 'El navegador bloqueó la ventana emergente de Google. Habilita popups e intenta de nuevo.';
+    if (firebaseCode === 'auth/popup-closed-by-user') return `Cerraste la ventana de ${providerLabel} antes de completar el registro.`;
+    if (firebaseCode === 'auth/popup-blocked') return `El navegador bloqueó la ventana emergente de ${providerLabel}. Habilita popups e intenta de nuevo.`;
+    if (firebaseCode === 'auth/cancelled-popup-request') return `Se canceló el flujo de ${providerLabel} porque hay otra ventana emergente abierta.`;
+    if (firebaseCode === 'auth/account-exists-with-different-credential') return 'Ya existe una cuenta con ese correo y un proveedor distinto.';
 
     if (error instanceof HttpErrorResponse) {
       const backendError = (error.error as { error?: string; detail?: string } | null)?.error;
       const backendDetail = (error.error as { error?: string; detail?: string } | null)?.detail;
-      return backendDetail ?? backendError ?? 'El backend no pudo autenticar con Google. Revisa credenciales Firebase del servidor.';
+      return backendDetail ?? backendError ?? `El backend no pudo autenticar con ${providerLabel}. Revisa configuración OAuth/Firebase del servidor.`;
     }
 
     const fallback = (error as { message?: string } | null)?.message;
-    return fallback ?? 'No se pudo completar el registro con Google. Intenta de nuevo.';
+    return fallback ?? `No se pudo completar el registro con ${providerLabel}. Intenta de nuevo.`;
   }
 
   loginType = [

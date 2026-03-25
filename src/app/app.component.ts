@@ -1,9 +1,10 @@
 // angular import
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, RouterModule } from '@angular/router';
 
 // project import
 import { SharedModule } from './demo/shared/shared.module';
+import { AuthService } from './@theme/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,7 @@ import { SharedModule } from './demo/shared/shared.module';
 })
 export class AppComponent {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   // public props
   isSpinnerVisible = true;
@@ -31,5 +33,27 @@ export class AppComponent {
         this.isSpinnerVisible = false;
       }
     );
+
+    this.validateSessionOnBootstrap();
+  }
+
+  private validateSessionOnBootstrap(): void {
+    if (!this.authService.hasStoredToken()) {
+      return;
+    }
+
+    this.authService.validateStoredSession().subscribe((isValid) => {
+      if (!isValid) {
+        void this.router.navigate(['/auth/login']);
+      }
+    });
+  }
+
+  @HostListener('document:click')
+  onAnyClick(): void {
+    const isValid = this.authService.assertSessionIntegrityOnInteraction();
+    if (!isValid) {
+      void this.router.navigate(['/auth/login']);
+    }
   }
 }
