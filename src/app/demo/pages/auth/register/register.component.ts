@@ -84,17 +84,15 @@ export default class RegisterComponent {
   }
 
   onSocialRegister(provider: string) {
-    if (provider === 'github') {
-      return;
-    }
-
     this.socialLoading = true;
     this.errorMessage = '';
     this.cdr.markForCheck();
 
     const request$: Observable<User> = provider === 'microsoft'
       ? this.authService.loginWithMicrosoft()
-      : this.authService.loginWithGoogle();
+      : provider === 'github'
+        ? this.authService.loginWithGithub()
+        : this.authService.loginWithGoogle();
 
     request$.subscribe({
       next: () => {
@@ -117,7 +115,11 @@ export default class RegisterComponent {
   }
 
   private getSocialAuthErrorMessage(error: unknown, provider: string): string {
-    const providerLabel = provider === 'microsoft' ? 'Microsoft' : 'Google';
+    const providerLabel = provider === 'microsoft'
+      ? 'Microsoft'
+      : provider === 'github'
+        ? 'GitHub'
+        : 'Google';
     const firebaseCode = (error as { code?: string } | null)?.code;
     if (firebaseCode === 'auth/popup-closed-by-user') return `Cerraste la ventana de ${providerLabel} antes de completar el registro.`;
     if (firebaseCode === 'auth/popup-blocked') return `El navegador bloqueó la ventana emergente de ${providerLabel}. Habilita popups e intenta de nuevo.`;

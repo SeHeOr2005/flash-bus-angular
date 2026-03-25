@@ -17,7 +17,7 @@
                   mat-stroked-button
                   class="m-t-10 text-muted"
                   (click)="onSocialLogin(list.alt)"
-                  [disabled]="loading || socialLoading || list.alt === 'github'"
+                  [disabled]="loading || socialLoading"
                 >
                   <div class="flex">
                     <img src="{{ list.image }}" alt="{{ list.alt }}" />

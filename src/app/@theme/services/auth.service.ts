@@ -4,7 +4,7 @@ import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http
 import { User, UserRole, UserPermission } from '../types/roles';
 import { environment } from 'src/environments/environment';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth';
+import { getAuth, GithubAuthProvider, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth';
 import { SKIP_AUTH_401_REDIRECT } from '../interceptors/auth-context.tokens';
 
 interface BackendUserRole {
@@ -197,6 +197,29 @@ export class AuthService {
         const token = this.extractBackendToken(response);
         if (!token) {
           throw new Error('El backend no devolvio un token JWT en la sincronizacion Microsoft.');
+        }
+        return this.hydrateSessionFromOAuthResponse(response, token);
+      })
+    );
+  }
+
+  loginWithGithub(): Observable<User> {
+    const auth = this.getFirebaseAuth();
+    const provider = new GithubAuthProvider();
+
+    return from(signInWithPopup(auth, provider)).pipe(
+      switchMap(async ({ user: firebaseUser }) => ({
+        idToken: await firebaseUser.getIdToken()
+      })),
+      switchMap(({ idToken }) =>
+        this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
+          firebaseIdToken: idToken
+        })
+      ),
+      switchMap((response) => {
+        const token = this.extractBackendToken(response);
+        if (!token) {
+          throw new Error('El backend no devolvio un token JWT en la sincronizacion GitHub.');
         }
         return this.hydrateSessionFromOAuthResponse(response, token);
       })
