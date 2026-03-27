@@ -6,12 +6,12 @@ export const environment = {
   apiUrl: 'http://localhost:8080',
   googleAuthEndpoint: '/security/oauth/login',
   firebase: {
-    apiKey: 'AIzaSyDpapnsuvlqMamMMbmAtQiN4IL8RIwVImQ',
-    authDomain: 'flashbuslogin.firebaseapp.com',
-    projectId: 'flashbuslogin',
-    storageBucket: 'flashbuslogin.firebasestorage.app',
-    messagingSenderId: '559714126358',
-    appId: '1:559714126358:web:1f55ba8cf08e62160a0337',
-    measurementId: 'G-T9SQVEH7N6'
+    apiKey: 'AIzaSyCcU-cd8mHfAS7ioRh2rsQkt5yQRZOKpX0',
+    authDomain: 'flashbusangular.firebaseapp.com',
+    projectId: 'flashbusangular',
+    storageBucket: 'flashbusangular.firebasestorage.app',
+    messagingSenderId: '68134736545',
+    appId: '1:68134736545:web:c84e52b800dc68cf1cd6e0',
+    measurementId: 'G-Q4CG33P77W'
   }
 };

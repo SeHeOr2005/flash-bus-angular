@@ -206,8 +206,12 @@ export class AuthService {
   loginWithGithub(): Observable<User> {
     const auth = this.getFirebaseAuth();
     const provider = new GithubAuthProvider();
+    provider.addScope('read:user');
+    provider.addScope('user:email');
+    provider.setCustomParameters({ allow_signup: 'true' });
 
-    return from(signInWithPopup(auth, provider)).pipe(
+    return from(signOut(auth).catch(() => undefined)).pipe(
+      switchMap(() => from(signInWithPopup(auth, provider))),
       switchMap(async ({ user: firebaseUser }) => ({
         idToken: await firebaseUser.getIdToken()
       })),
