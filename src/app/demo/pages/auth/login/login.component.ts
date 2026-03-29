@@ -1,7 +1,7 @@
 // angular import
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 // project import
@@ -24,10 +24,20 @@ export default class LoginComponent {
   loading = false;
   socialLoading = false;
   errorMessage = '';
+  sessionExpiredMessage = '';
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    this.route.queryParams.subscribe((params) => {
+      if (params['reason'] === 'expired') {
+        this.sessionExpiredMessage = 'Tu sesión ha expirado o fue modificada. Por favor inicia sesión nuevamente.';
+      }
+    });
+  }
 
   getErrorMessage() {
     if (this.email.hasError('required')) return 'Debes ingresar un correo electrónico';
@@ -112,8 +122,8 @@ export default class LoginComponent {
   }
 
   loginType = [
-    { image: 'assets/images/authentication/github.svg', alt: 'github', title: 'Iniciar sesión con GitHub' },
-    { image: 'assets/images/authentication/microsoft.svg', alt: 'microsoft', title: 'Iniciar sesión con Microsoft' },
-    { image: 'assets/images/authentication/google.svg', alt: 'google', title: 'Iniciar sesión con Google' }
+    { image: 'assets/images/authentication/github.svg', alt: 'github', title: 'Iniciar sesión con GitHub', shortTitle: 'GitHub' },
+    { image: 'assets/images/authentication/microsoft.svg', alt: 'microsoft', title: 'Iniciar sesión con Microsoft', shortTitle: 'Microsoft' },
+    { image: 'assets/images/authentication/google.svg', alt: 'google', title: 'Iniciar sesión con Google', shortTitle: 'Google' }
   ];
 }

@@ -1,100 +1,136 @@
 <div class="auth-main">
   <div class="auth-wrapper version-1">
-    <div class="auth-form">
-      <div class="auth-background">
-        <div class="yellow-circle"></div>
-        <div class="red-circle"></div>
+
+    <!-- Left branding panel -->
+    <div class="auth-side-panel">
+      <div class="side-decoration">
+        <div class="deco-circle deco-1"></div>
+        <div class="deco-circle deco-2"></div>
+        <div class="deco-circle deco-3"></div>
       </div>
+      <div class="side-content">
+        <img src="assets/images/flash-bus-logo.png" alt="Flash Bus" class="side-logo" />
+        <h2 class="side-title">Únete a Flash Bus</h2>
+        <p class="side-tagline">Regístrate y accede al sistema de gestión de transporte más completo</p>
+        <ul class="side-features">
+          <li>
+            <i class="ti ti-user-check"></i>
+            <span>Registro rápido y seguro</span>
+          </li>
+          <li>
+            <i class="ti ti-shield-lock"></i>
+            <span>Datos protegidos con cifrado</span>
+          </li>
+          <li>
+            <i class="ti ti-device-mobile"></i>
+            <span>Acceso desde cualquier dispositivo</span>
+          </li>
+          <li>
+            <i class="ti ti-headset"></i>
+            <span>Soporte técnico disponible</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form">
       <div class="main-form">
         <app-card [showHeader]="false" class="auth-form-card" [padding]="40">
+
           <div class="text-center">
             <a href="javascript:">
-              <img src="assets/images/flash-bus-logo.png" alt="logo" height="80" />
+              <img src="assets/images/flash-bus-logo.png" alt="logo" class="form-logo" />
             </a>
-            <div class="login-with">
-              @for (list of loginType; track list) {
-                <button
-                  mat-stroked-button
-                  class="m-t-10 text-muted"
-                  (click)="onSocialRegister(list.alt)"
-                  [disabled]="loading || socialLoading"
-                >
-                  <div class="flex">
-                    <img src="{{ list.image }}" alt="{{ list.alt }}" />
-                    <span class="mat-body p-l-10">{{ list.title }}</span>
-                  </div>
-                </button>
-              }
-            </div>
+            <h3 class="form-title">Crear cuenta</h3>
+            <p class="form-subtitle">Completa tu información para registrarte</p>
           </div>
+
+          <div class="login-with">
+            @for (list of loginType; track list) {
+              <button
+                mat-stroked-button
+                class="social-btn"
+                [matTooltip]="list.title"
+                (click)="onSocialRegister(list.alt)"
+                [disabled]="loading || socialLoading"
+              >
+                <img src="{{ list.image }}" alt="{{ list.alt }}" />
+              </button>
+            }
+          </div>
+
           <div class="separator">
-            <span>O</span>
+            <span>o regístrate con correo</span>
           </div>
-          <h4 class="text-center m-b-25 f-20 f-w-500">Regístrate con tu correo electrónico</h4>
+
           <div class="row text-start">
             <div class="col-md-6">
-              <label for="name" class="f-w-500">Nombre</label>
+              <label class="field-label">Nombre</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
                 <input type="text" matInput placeholder="Nombre" [(ngModel)]="firstName" />
               </mat-form-field>
             </div>
             <div class="col-md-6">
-              <label for="name" class="f-w-500">Apellido</label>
+              <label class="field-label">Apellido</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
                 <input type="text" matInput placeholder="Apellido" [(ngModel)]="lastName" />
               </mat-form-field>
             </div>
             <div class="col-12">
-              <label for="name" class="f-w-500">Ingresa tu correo electrónico</label>
+              <label class="field-label">Correo electrónico</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input matInput [formControl]="email" required placeholder="Correo electrónico" />
+                <input matInput [formControl]="email" required placeholder="tu@correo.com" />
                 @if (email.invalid) {
                   <mat-error>{{ getErrorMessage() }}</mat-error>
                 }
               </mat-form-field>
             </div>
             <div class="col-12">
-              <label for="name" class="f-w-500">Ingresa tu contraseña</label>
+              <label class="field-label">Contraseña</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Contraseña" [(ngModel)]="password" />
+                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Crea tu contraseña" [(ngModel)]="password" />
                 <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="hide">
                   <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
               </mat-form-field>
             </div>
             <div class="col-12">
-              <label for="name" class="f-w-500">Confirma tu contraseña</label>
+              <label class="field-label">Confirmar contraseña</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
                 <input matInput [type]="coHide ? 'password' : 'text'" placeholder="Confirma tu contraseña" [(ngModel)]="confirmPassword" />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  (click)="coHide = !coHide"
-                  [attr.aria-label]="'Ocultar contraseña'"
-                  [attr.aria-pressed]="coHide"
-                >
+                <button mat-icon-button matSuffix (click)="coHide = !coHide" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="coHide">
                   <mat-icon>{{ coHide ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
               </mat-form-field>
             </div>
           </div>
+
           <div class="check-me">
-            <mat-checkbox class="float-start" checked color="primary">Acepto todos los términos y condiciones</mat-checkbox>
+            <mat-checkbox checked color="primary">Acepto los <a href="javascript:" class="text-primary-500">términos y condiciones</a></mat-checkbox>
           </div>
+
           @if (errorMessage) {
-            <p class="text-danger text-center m-t-10">{{ errorMessage }}</p>
+            <div class="error-banner m-t-10">
+              <i class="ti ti-alert-circle"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
           }
-          <div class="grid">
-            <button mat-flat-button color="primary" class="b-rad-20 m-t-15" (click)="onRegister()" [disabled]="loading || socialLoading">
-              {{ loading ? 'Registrando...' : 'Registrarse' }}
+
+          <div class="grid m-t-15">
+            <button mat-flat-button color="primary" class="login-btn" (click)="onRegister()" [disabled]="loading || socialLoading">
+              {{ loading ? 'Registrando...' : 'Crear cuenta' }}
             </button>
           </div>
-          <div class="check-me m-t-15">
-            <h6 class="f-w-400 text-muted m-b-0">¿Ya tienes cuenta?</h6>
+
+          <div class="register-link m-t-20">
+            <span class="text-muted">¿Ya tienes cuenta?</span>
             <a class="text-primary-500" [routerLink]="['/auth/login']">Inicia sesión</a>
           </div>
+
         </app-card>
       </div>
     </div>
+
   </div>
 </div>

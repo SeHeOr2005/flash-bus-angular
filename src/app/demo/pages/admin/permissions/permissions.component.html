@@ -2,19 +2,23 @@
 
   <!-- Encabezado -->
   <div class="page-header">
-    <div class="header-left">
+    <div class="header-info">
       <div class="header-title">
-        <mat-icon>vpn_key</mat-icon>
-        <h4>Gestión de Permisos</h4>
+        <div class="header-icon-wrap icon-amber">
+          <i class="ti ti-key"></i>
+        </div>
+        <div>
+          <h4>Gestión de Permisos</h4>
+          <p class="text-muted">Define los endpoints protegidos y controla el acceso por método HTTP</p>
+        </div>
       </div>
-      <p class="text-muted">Define los endpoints protegidos y controla el acceso por método HTTP</p>
+      <ng-container *appHasPermission="{ url: '/permissions', method: 'POST' }">
+        <button mat-flat-button color="primary" (click)="openPermissionForm()">
+          <mat-icon>add</mat-icon>
+          Nuevo Permiso
+        </button>
+      </ng-container>
     </div>
-    <ng-container *appHasPermission="{ url: '/permissions', method: 'POST' }">
-      <button mat-flat-button color="primary" (click)="openPermissionForm()">
-        <mat-icon>add</mat-icon>
-        Nuevo Permiso
-      </button>
-    </ng-container>
   </div>
 
   <!-- Barra de búsqueda -->
@@ -27,7 +31,7 @@
                (ngModelChange)="onSearch($event)" />
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
-      <button mat-flat-button color="accent" (click)="loadPermissions()">
+      <button mat-flat-button color="primary" (click)="loadPermissions()">
         <mat-icon>refresh</mat-icon>
         Actualizar
       </button>
@@ -38,12 +42,14 @@
   <app-card>
 
     <div *ngIf="loading()" class="loading-container">
-      <mat-spinner diameter="48"></mat-spinner>
+      <mat-spinner diameter="40"></mat-spinner>
       <p>Cargando permisos...</p>
     </div>
 
     <div *ngIf="!loading() && errorMessage()" class="error-state">
-      <mat-icon class="error-icon">error_outline</mat-icon>
+      <div class="error-icon-wrap">
+        <mat-icon>error_outline</mat-icon>
+      </div>
       <h5>{{ errorMessage() }}</h5>
       <button mat-flat-button color="primary" (click)="loadPermissions()">
         <mat-icon>refresh</mat-icon> Reintentar

@@ -2,30 +2,36 @@
 
   <!-- Encabezado -->
   <div class="page-header">
-    <div class="header-left">
+    <div class="header-info">
       <div class="header-title">
-        <mat-icon>admin_panel_settings</mat-icon>
-        <h4>Gestión de Roles</h4>
+        <div class="header-icon-wrap icon-purple">
+          <i class="ti ti-shield-half"></i>
+        </div>
+        <div>
+          <h4>Gestión de Roles</h4>
+          <p class="text-muted">Administra los roles del sistema y sus permisos de acceso</p>
+        </div>
       </div>
-      <p class="text-muted">Administra los roles del sistema y sus permisos de acceso</p>
+      <ng-container *appHasPermission="{ url: '/roles', method: 'POST' }">
+        <button mat-flat-button color="primary" (click)="openRoleForm()">
+          <mat-icon>add</mat-icon>
+          Nuevo Rol
+        </button>
+      </ng-container>
     </div>
-    <ng-container *appHasPermission="{ url: '/roles', method: 'POST' }">
-      <button mat-flat-button color="primary" (click)="openRoleForm()">
-        <mat-icon>add</mat-icon>
-        Nuevo Rol
-      </button>
-    </ng-container>
   </div>
 
   <app-card>
 
     <div *ngIf="loading()" class="loading-container">
-      <mat-spinner diameter="48"></mat-spinner>
+      <mat-spinner diameter="40"></mat-spinner>
       <p>Cargando roles...</p>
     </div>
 
     <div *ngIf="!loading() && errorMessage()" class="error-state">
-      <mat-icon class="error-icon">error_outline</mat-icon>
+      <div class="error-icon-wrap">
+        <mat-icon>error_outline</mat-icon>
+      </div>
       <h5>{{ errorMessage() }}</h5>
       <button mat-flat-button color="primary" (click)="loadAll()">
         <mat-icon>refresh</mat-icon> Reintentar
@@ -71,24 +77,19 @@
         <th mat-header-cell *matHeaderCellDef>Acciones</th>
         <td mat-cell *matCellDef="let role">
           <div class="actions-row">
-            <!-- Gestionar permisos -->
             <ng-container *appHasPermission="[
               { url: '/role-permission', method: 'GET' },
               { url: '/role-permission', method: 'POST' },
               { url: '/role-permission', method: 'DELETE' }]">
-              <button mat-icon-button color="primary"
-                      matTooltip="Gestionar permisos"
-                      (click)="openPermissions(role)">
+              <button mat-icon-button color="primary" matTooltip="Gestionar permisos" (click)="openPermissions(role)">
                 <mat-icon>vpn_key</mat-icon>
               </button>
             </ng-container>
-            <!-- Editar -->
             <ng-container *appHasPermission="{ url: '/roles', method: 'PUT' }">
               <button mat-icon-button matTooltip="Editar rol" (click)="openRoleForm(role)">
                 <mat-icon>edit</mat-icon>
               </button>
             </ng-container>
-            <!-- Eliminar -->
             <ng-container *appHasPermission="{ url: '/roles', method: 'DELETE' }">
               <button mat-icon-button color="warn" matTooltip="Eliminar rol" (click)="deleteRole(role)">
                 <mat-icon>delete_outline</mat-icon>

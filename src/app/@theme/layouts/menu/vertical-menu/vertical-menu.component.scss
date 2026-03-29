@@ -1,45 +1,44 @@
 @import '../../../styles/theme-palette-colors.scss';
 
-.w-50 {
-  width: 50%;
-}
-
-// Avatar circular con iniciales en el sidebar
+// ── Avatar del sidebar ────────────────────────────────────────────────────────
 .sidebar-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4680ff 0%, #1c76da 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.5px;
   flex-shrink: 0;
   user-select: none;
   margin-right: 10px;
+  box-shadow: 0 4px 12px rgba(70, 128, 255, 0.3);
 }
 
-// Nombre del usuario en el sidebar
+// ── Nombre del usuario ────────────────────────────────────────────────────────
 .user-name-sidebar {
-  margin: 0 0 2px 0;
+  margin: 0 0 3px;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 120px;
+  color: var(--text-900);
 }
 
-// Badge del rol activo
+// ── Badge del rol activo ──────────────────────────────────────────────────────
 .user-role-badge {
-  font-size: 11px;
-  color: #1976d2;
-  font-weight: 500;
-  background: #e3f2fd;
-  padding: 1px 8px;
-  border-radius: 10px;
+  font-size: 10px;
+  color: #4680ff;
+  font-weight: 600;
+  background: rgba(70, 128, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 8px;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }

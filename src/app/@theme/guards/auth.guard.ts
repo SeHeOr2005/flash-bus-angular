@@ -8,6 +8,6 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return authService.validateStoredSession().pipe(
-    map((isValid) => (isValid ? true : router.createUrlTree(['/auth/login'])))
+    map((isValid) => (isValid ? true : router.createUrlTree(['/auth/login'], { queryParams: { reason: 'expired' } })))
   );
 };

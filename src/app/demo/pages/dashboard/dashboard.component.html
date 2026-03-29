@@ -1,4 +1,18 @@
 <div class="dashboard-container">
+
+  <!-- Hero Banner -->
+  <div class="dashboard-hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h3 class="hero-title">Panel de Control</h3>
+        <p class="hero-subtitle">Sistema de Gestión de Transporte Flash Bus &mdash; Manizales</p>
+      </div>
+      <div class="hero-icon-wrap">
+        <i class="ti ti-bus"></i>
+      </div>
+    </div>
+  </div>
+
   <!-- Estadísticas Rápidas -->
   <div class="row stat-row mb-4">
     <div class="col-md-6 col-lg-3" *ngFor="let stat of quickStats">
@@ -19,10 +33,12 @@
   <div class="row">
     <!-- Noticias y Alertas -->
     <div class="col-lg-8">
+
       <!-- Alertas Activas -->
       <app-card class="news-section mb-4">
         <div class="section-header">
-          <h5>🚨 Alertas Activas</h5>
+          <span class="section-icon-wrap alert-icon"><i class="ti ti-alert-triangle"></i></span>
+          <h5>Alertas Activas</h5>
         </div>
         <div class="alerts-container">
           <div *ngFor="let news of getNews('alert')" class="alert-item" [ngClass]="getAlertClass(news.priority)">
@@ -44,7 +60,8 @@
       <!-- Noticias de Empresas -->
       <app-card class="news-section mb-4">
         <div class="section-header">
-          <h5>📰 Noticias de Operadores</h5>
+          <span class="section-icon-wrap news-icon"><i class="ti ti-news"></i></span>
+          <h5>Noticias de Operadores</h5>
         </div>
         <div class="news-container">
           <div *ngFor="let news of getNews('news')" class="news-item">
@@ -69,7 +86,8 @@
       <!-- Avisos de Mantenimiento -->
       <app-card class="news-section">
         <div class="section-header">
-          <h5>🔧 Mantenimiento y Cambios</h5>
+          <span class="section-icon-wrap maintenance-icon"><i class="ti ti-tool"></i></span>
+          <h5>Mantenimiento y Cambios</h5>
         </div>
         <div class="maintenance-container">
           <div *ngFor="let news of getNews('maintenance')" class="maintenance-item">
@@ -94,7 +112,8 @@
       <!-- Estado de Paradas -->
       <app-card class="stops-section mb-4">
         <div class="section-header">
-          <h5>🚏 Estado de Paradas</h5>
+          <span class="section-icon-wrap stops-icon"><i class="ti ti-map-pin"></i></span>
+          <h5>Estado de Paradas</h5>
         </div>
         <div class="stops-container">
           <div *ngFor="let stop of busStops" class="stop-item" [ngClass]="getStopStatusClass(stop.status)">
@@ -117,7 +136,8 @@
       <!-- Avisos de Seguridad -->
       <app-card class="safety-section">
         <div class="section-header">
-          <h5>🛡️ Seguridad</h5>
+          <span class="section-icon-wrap safety-icon"><i class="ti ti-shield-check"></i></span>
+          <h5>Seguridad</h5>
         </div>
         <div class="safety-container">
           <div *ngFor="let news of getNews('safety')" class="safety-item">

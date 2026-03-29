@@ -1,139 +1,146 @@
-<div class="row">
-  <!-- Selector de empresa -->
-  <div class="col-12">
-    <app-card>
-      <div class="card-header">
-        <div class="header-content">
-          <mat-icon class="header-icon">directions_bus</mat-icon>
-          <div>
-            <h5 class="m-0">Rutas de Buses - Manizales</h5>
-            <p class="header-subtitle">Selecciona una empresa para ver sus rutas disponibles</p>
-          </div>
+<div class="search-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <div class="header-icon-wrap">
+        <i class="ti ti-route"></i>
+      </div>
+      <div>
+        <h4>Rutas de Buses</h4>
+        <p class="text-muted">Explora las rutas disponibles en Manizales</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Selector de empresa -->
+    <div class="col-12">
+      <app-card>
+        <div class="selector-section">
+          <label class="selector-label">
+            <i class="ti ti-building-factory-2"></i>
+            Empresa de transporte
+          </label>
+          <select
+            id="company"
+            class="company-select"
+            [(ngModel)]="selectedCompanyId"
+            (ngModelChange)="onCompanyChange()"
+          >
+            <option [ngValue]="null" disabled>— Selecciona una empresa —</option>
+            @for (company of companies; track company.id) {
+              <option [ngValue]="company.id">{{ company.name }}</option>
+            }
+          </select>
         </div>
-      </div>
 
-      <div class="company-selector">
-        <label for="company" class="form-label">Empresa de transporte</label>
-        <select
-          id="company"
-          class="form-control form-select"
-          [(ngModel)]="selectedCompanyId"
-          (ngModelChange)="onCompanyChange()"
-        >
-          <option [ngValue]="null" disabled>-- Selecciona una empresa --</option>
-          @for (company of companies; track company.id) {
-            <option [ngValue]="company.id">{{ company.name }}</option>
-          }
-        </select>
-      </div>
-
-      <!-- Info de la empresa seleccionada -->
-      @if (selectedCompany) {
-        <div class="company-info">
-          <div class="company-card">
+        <!-- Info de la empresa seleccionada -->
+        @if (selectedCompany) {
+          <div class="company-info">
             <img [src]="selectedCompany.logo" alt="{{ selectedCompany.name }}" class="company-logo" />
             <div class="company-details">
               <h6 class="company-name">{{ selectedCompany.name }}</h6>
               <p class="company-desc">{{ selectedCompany.description }}</p>
               <div class="company-stats">
-                <span class="stat">
-                  <mat-icon>star</mat-icon> {{ selectedCompany.rating }}
+                <span class="stat-chip">
+                  <i class="ti ti-star-filled"></i> {{ selectedCompany.rating }}
                 </span>
-                <span class="stat">
-                  <mat-icon>directions_bus</mat-icon> {{ selectedCompany.busCount }} buses
+                <span class="stat-chip">
+                  <i class="ti ti-bus"></i> {{ selectedCompany.busCount }} buses
                 </span>
-                <span class="stat">
-                  <mat-icon>route</mat-icon> {{ selectedCompany.routes.length }} rutas
+                <span class="stat-chip">
+                  <i class="ti ti-route"></i> {{ selectedCompany.routes.length }} rutas
                 </span>
               </div>
             </div>
           </div>
+        }
+      </app-card>
+    </div>
+
+    <!-- Listado de rutas -->
+    @if (selectedCompany) {
+      <div class="col-12">
+        <div class="routes-section-title">
+          <i class="ti ti-map-2"></i>
+          <span>Rutas de <strong>{{ selectedCompany.name }}</strong></span>
+          <span class="route-count-badge">{{ selectedCompany.routes.length }}</span>
         </div>
-      }
-    </app-card>
-  </div>
 
-  <!-- Listado de rutas -->
-  @if (selectedCompany) {
-    <div class="col-12">
-      <h5 class="section-title">
-        <mat-icon>route</mat-icon>
-        Rutas de {{ selectedCompany.name }}
-        <span class="route-count">({{ selectedCompany.routes.length }})</span>
-      </h5>
-
-      <div class="routes-grid">
-        @for (route of selectedCompany.routes; track route.id) {
-          <app-card
-            class="route-card"
-            [class.active]="selectedRoute?.id === route.id"
-            (click)="selectRoute(route)"
-          >
-            <div class="route-header">
-              <div class="route-badge" [style.background-color]="route.color">
-                {{ route.code }}
-              </div>
-              <div class="route-title">
-                <h6 class="route-name">{{ route.name }}</h6>
-                <div class="route-meta">
-                  <span><mat-icon>schedule</mat-icon> {{ route.frequency }}</span>
-                  <span><mat-icon>access_time</mat-icon> {{ route.schedule }}</span>
+        <div class="routes-grid">
+          @for (route of selectedCompany.routes; track route.id) {
+            <app-card
+              class="route-card"
+              [class.active]="selectedRoute?.id === route.id"
+              (click)="selectRoute(route)"
+            >
+              <div class="route-header">
+                <div class="route-badge" [style.background-color]="route.color">
+                  {{ route.code }}
                 </div>
-              </div>
-              <div class="route-price">
-                ${{ route.price | number }}
-              </div>
-            </div>
-
-            <!-- Detalle expandido de la ruta -->
-            @if (selectedRoute?.id === route.id) {
-              <div class="route-detail">
-                <div class="route-stops">
-                  <h6 class="stops-title">
-                    <mat-icon>pin_drop</mat-icon> Recorrido ({{ route.stops.length }} paraderos)
-                  </h6>
-                  <div class="stops-timeline">
-                    @for (stop of route.stops; track stop.order) {
-                      <div class="stop-item" [class.first]="stop.order === 1" [class.last]="stop.order === route.stops.length">
-                        <div class="stop-dot" [style.background-color]="route.color"></div>
-                        <div class="stop-info">
-                          <span class="stop-name">{{ stop.name }}</span>
-                          <span class="stop-order">Paradero {{ stop.order }}</span>
-                        </div>
-                      </div>
-                    }
+                <div class="route-title">
+                  <h6 class="route-name">{{ route.name }}</h6>
+                  <div class="route-meta">
+                    <span><i class="ti ti-clock"></i> {{ route.frequency }}</span>
+                    <span><i class="ti ti-calendar-time"></i> {{ route.schedule }}</span>
                   </div>
                 </div>
-
-                <!-- Placeholder para futura funcionalidad -->
-                <div class="route-actions">
-                  <button class="btn btn-outline-primary btn-sm" disabled>
-                    <mat-icon>map</mat-icon> Ver mapa de ruta
-                  </button>
-                  <button class="btn btn-outline-primary btn-sm" disabled>
-                    <mat-icon>schedule</mat-icon> Ver horarios completos
-                  </button>
-                  <p class="coming-soon">
-                    <mat-icon>info</mat-icon>
-                    Próximamente podrás ver el mapa interactivo, tiempos estimados y paraderos en tiempo real.
-                  </p>
+                <div class="route-price">
+                  ${{ route.price | number }}
                 </div>
               </div>
-            }
-          </app-card>
-        }
-      </div>
-    </div>
-  }
 
-  <!-- Estado vacío -->
-  @if (!selectedCompany) {
-    <div class="col-12">
-      <div class="empty-state">
-        <mat-icon class="empty-icon">commute</mat-icon>
-        <h5>Explora las rutas de bus en Manizales</h5>
-        <p>Selecciona una empresa de transporte del menú desplegable para ver todas sus rutas, paraderos y horarios.</p>
+              <!-- Detalle expandido de la ruta -->
+              @if (selectedRoute?.id === route.id) {
+                <div class="route-detail">
+                  <div class="route-stops">
+                    <h6 class="stops-title">
+                      <i class="ti ti-pin"></i> Recorrido ({{ route.stops.length }} paraderos)
+                    </h6>
+                    <div class="stops-timeline">
+                      @for (stop of route.stops; track stop.order) {
+                        <div class="stop-item" [class.first]="stop.order === 1" [class.last]="stop.order === route.stops.length">
+                          <div class="stop-dot" [style.background-color]="route.color"></div>
+                          <div class="stop-info">
+                            <span class="stop-name">{{ stop.name }}</span>
+                            <span class="stop-order">Paradero {{ stop.order }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Acciones futuras -->
+                  <div class="route-actions">
+                    <button class="btn btn-outline-primary btn-sm" disabled>
+                      <i class="ti ti-map"></i> Ver mapa de ruta
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" disabled>
+                      <i class="ti ti-clock-hour-4"></i> Ver horarios completos
+                    </button>
+                    <div class="coming-soon">
+                      <i class="ti ti-info-circle"></i>
+                      Próximamente podrás ver el mapa interactivo, tiempos estimados y paraderos en tiempo real.
+                    </div>
+                  </div>
+                </div>
+              }
+            </app-card>
+          }
+        </div>
       </div>
-    </div>
-  }
+    }
+
+    <!-- Estado vacío -->
+    @if (!selectedCompany) {
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="ti ti-bus-stop empty-icon"></i>
+          <h5>Explora las rutas de bus en Manizales</h5>
+          <p>Selecciona una empresa de transporte del menú desplegable para ver todas sus rutas, paraderos y horarios.</p>
+        </div>
+      </div>
+    }
+  </div>
 </div>

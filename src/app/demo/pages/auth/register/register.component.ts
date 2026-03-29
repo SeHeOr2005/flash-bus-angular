@@ -137,8 +137,8 @@ export default class RegisterComponent {
   }
 
   loginType = [
-    { image: 'assets/images/authentication/github.svg', alt: 'github', title: 'Registrarse con GitHub' },
-    { image: 'assets/images/authentication/microsoft.svg', alt: 'microsoft', title: 'Registrarse con Microsoft' },
-    { image: 'assets/images/authentication/google.svg', alt: 'google', title: 'Registrarse con Google' }
+    { image: 'assets/images/authentication/github.svg', alt: 'github', title: 'Registrarse con GitHub', shortTitle: 'GitHub' },
+    { image: 'assets/images/authentication/microsoft.svg', alt: 'microsoft', title: 'Registrarse con Microsoft', shortTitle: 'Microsoft' },
+    { image: 'assets/images/authentication/google.svg', alt: 'google', title: 'Registrarse con Google', shortTitle: 'Google' }
   ];
 }

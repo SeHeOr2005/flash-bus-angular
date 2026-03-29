@@ -44,7 +44,7 @@ export class AppComponent {
 
     this.authService.validateStoredSession().subscribe((isValid) => {
       if (!isValid) {
-        void this.router.navigate(['/auth/login']);
+        void this.router.navigate(['/auth/login'], { queryParams: { reason: 'expired' } });
       }
     });
   }
@@ -53,7 +53,7 @@ export class AppComponent {
   onAnyClick(): void {
     const isValid = this.authService.assertSessionIntegrityOnInteraction();
     if (!isValid) {
-      void this.router.navigate(['/auth/login']);
+      void this.router.navigate(['/auth/login'], { queryParams: { reason: 'expired' } });
     }
   }
 }
