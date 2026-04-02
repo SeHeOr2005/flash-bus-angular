@@ -94,15 +94,47 @@
                   <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
               </mat-form-field>
+
+              @if (hasStartedTypingPassword && !isPasswordValid) {
+                <div class="password-hint-card">
+                  <div class="hint-title">La contraseña debe tener:</div>
+                  <ul>
+                    <li [class.ok]="passwordRequirements.minLength">Minimo 8 caracteres</li>
+                    <li [class.ok]="passwordRequirements.uppercase">Al menos una mayuscula</li>
+                    <li [class.ok]="passwordRequirements.number">Al menos un numero</li>
+                    <li [class.ok]="passwordRequirements.special">Al menos un caracter especial</li>
+                  </ul>
+                </div>
+              }
+
+              @if (passwordStrength) {
+                <div class="password-strength" [ngClass]="'strength-' + passwordStrength">
+                  <div class="strength-track">
+                    <span [style.width.%]="passwordStrengthPercent" [style.backgroundColor]="passwordStrengthColor"></span>
+                  </div>
+                  <small>Fortaleza: {{ passwordStrengthLabel }}</small>
+                </div>
+              }
             </div>
             <div class="col-12">
               <label class="field-label">Confirmar contraseña</label>
               <mat-form-field appearance="outline" class="w-100 m-t-5">
-                <input matInput [type]="coHide ? 'password' : 'text'" placeholder="Confirma tu contraseña" [(ngModel)]="confirmPassword" />
+                <input
+                  matInput
+                  [type]="coHide ? 'password' : 'text'"
+                  placeholder="Confirma tu contraseña"
+                  [(ngModel)]="confirmPassword"
+                  [class.match-ok]="passwordsMatch"
+                  [class.match-error]="showPasswordMismatch"
+                />
                 <button mat-icon-button matSuffix (click)="coHide = !coHide" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="coHide">
                   <mat-icon>{{ coHide ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
               </mat-form-field>
+
+              @if (showPasswordMismatch) {
+                <small class="password-match-error">Las contraseñas no coinciden.</small>
+              }
             </div>
           </div>
 

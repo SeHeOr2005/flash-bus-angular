@@ -8,3 +8,86 @@
     }
   }
 }
+
+.password-hint-card {
+  background: #f3f8ff;
+  border: 1px solid #cfe2ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 2px;
+
+  .hint-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1f3f74;
+    margin-bottom: 6px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  li {
+    font-size: 0.78rem;
+    color: #677788;
+    margin-bottom: 2px;
+
+    &.ok {
+      color: #1c7c54;
+      font-weight: 500;
+    }
+  }
+}
+
+.password-strength {
+  margin-top: 8px;
+
+  .strength-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e5eaf0;
+    overflow: hidden;
+
+    span {
+      display: block;
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+  }
+
+  small {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.76rem;
+    color: #5e6b78;
+  }
+
+  &.strength-debil .strength-track span {
+    background: #dc2626;
+  }
+
+  &.strength-media .strength-track span {
+    background: #f59e0b;
+  }
+
+  &.strength-fuerte .strength-track span {
+    background: #16a34a;
+  }
+}
+
+.password-match-error {
+  color: #c62828;
+  font-size: 0.76rem;
+  display: block;
+  margin-top: -2px;
+}
+
+.match-ok {
+  color: #1e7a37;
+}
+
+.match-error {
+  color: #c62828;
+}

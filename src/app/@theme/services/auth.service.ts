@@ -156,6 +156,10 @@ export class AuthService {
     );
   }
 
+  loginWithBackendCredentials(email: string, password: string): Observable<User> {
+    return this.loginWithBackendPassword(email, password);
+  }
+
   loginWithGoogle(): Observable<User> {
     const auth = this.getFirebaseAuth();
     const provider = new GoogleAuthProvider();
@@ -206,12 +210,8 @@ export class AuthService {
   loginWithGithub(): Observable<User> {
     const auth = this.getFirebaseAuth();
     const provider = new GithubAuthProvider();
-    provider.addScope('read:user');
-    provider.addScope('user:email');
-    provider.setCustomParameters({ allow_signup: 'true' });
 
-    return from(signOut(auth).catch(() => undefined)).pipe(
-      switchMap(() => from(signInWithPopup(auth, provider))),
+    return from(signInWithPopup(auth, provider)).pipe(
       switchMap(async ({ user: firebaseUser }) => ({
         idToken: await firebaseUser.getIdToken()
       })),
@@ -324,6 +324,12 @@ export class AuthService {
     const userId = payload['id'] as string;
 
     return this.loadRolesAndPermissionsByUserId(userId).pipe(
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          return of({ roles: [] as UserRole[], permissions: [] as UserPermission[] });
+        }
+        return throwError(() => error);
+      }),
       map(({ roles, permissions }) => {
         const user: User = {
           id: userId,

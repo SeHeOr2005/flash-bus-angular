@@ -41,28 +41,113 @@ export default class RegisterComponent {
     return this.email.hasError('email') ? 'Correo electrónico no válido' : '';
   }
 
+  get hasStartedTypingPassword(): boolean {
+    return this.password.length > 0;
+  }
+
+  get passwordRequirements() {
+    const value = this.password;
+    return {
+      minLength: value.length >= 8,
+      uppercase: /[A-Z]/.test(value),
+      number: /\d/.test(value),
+      special: /[^A-Za-z0-9]/.test(value)
+    };
+  }
+
+  get isPasswordValid(): boolean {
+    const req = this.passwordRequirements;
+    return req.minLength && req.uppercase && req.number && req.special;
+  }
+
+  get passwordsMatch(): boolean {
+    return !!this.confirmPassword && this.password === this.confirmPassword;
+  }
+
+  get showPasswordMismatch(): boolean {
+    return !!this.confirmPassword && !this.passwordsMatch;
+  }
+
+  get passwordStrength(): 'debil' | 'media' | 'fuerte' | null {
+    if (!this.isPasswordValid) {
+      return null;
+    }
+
+    let score = 0;
+    if (this.password.length >= 10) score++;
+    if (this.password.length >= 12) score++;
+    if (/[a-z]/.test(this.password) && /[A-Z]/.test(this.password)) score++;
+    if (/\d/.test(this.password) && /[^A-Za-z0-9]/.test(this.password)) score++;
+
+    if (score <= 1) return 'debil';
+    if (score <= 3) return 'media';
+    return 'fuerte';
+  }
+
+  get passwordStrengthPercent(): number {
+    const strength = this.passwordStrength;
+    if (strength === 'debil') return 30;
+    if (strength === 'media') return 65;
+    if (strength === 'fuerte') return 100;
+    return 0;
+  }
+
+  get passwordStrengthColor(): string {
+    const strength = this.passwordStrength;
+    if (strength === 'debil') return '#dc2626';
+    if (strength === 'media') return '#f59e0b';
+    if (strength === 'fuerte') return '#16a34a';
+    return '#e5eaf0';
+  }
+
+  get passwordStrengthLabel(): string {
+    const strength = this.passwordStrength;
+    if (strength === 'debil') return 'Debil';
+    if (strength === 'media') return 'Media';
+    if (strength === 'fuerte') return 'Fuerte';
+    return '';
+  }
+
   onRegister() {
     if (this.email.invalid || !this.firstName || !this.password) {
       this.email.markAsTouched();
       return;
     }
-    if (this.password !== this.confirmPassword) {
+
+    if (!this.isPasswordValid) {
+      this.errorMessage = 'La contraseña no cumple con los requisitos mínimos.';
+      return;
+    }
+
+    if (!this.passwordsMatch) {
       this.errorMessage = 'Las contraseñas no coinciden';
       return;
     }
+
     this.loading = true;
     this.errorMessage = '';
     const name = this.lastName ? `${this.firstName} ${this.lastName}` : this.firstName;
     this.http.post(`${environment.apiUrl}/api/users/register`, { name, email: this.email.value, password: this.password }).subscribe({
       next: () => {
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.router.navigate(['/auth/login']);
+        this.authService.loginWithBackendCredentials(this.email.value || '', this.password).subscribe({
+          next: () => {
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.router.navigate(['/dashboard']);
+          },
+          error: () => {
+            this.loading = false;
+            this.errorMessage = 'La cuenta se creo, pero no fue posible iniciar sesion automaticamente.';
+            this.cdr.markForCheck();
+          }
+        });
       },
       error: (err) => {
         this.errorMessage = err.status === 409
           ? '⚠️ El correo ya está registrado. Usa otro o inicia sesión.'
-          : 'Error al registrar. Intenta de nuevo.';
+          : err.status === 400
+            ? ((err.error as { error?: string } | null)?.error ?? 'Datos de registro invalidos. Revisa la contraseña.')
+            : 'Error al registrar. Intenta de nuevo.';
         this.snackBar.open(this.errorMessage, 'Cerrar', {
           duration: 5000,
           panelClass: err.status === 409 ? ['snack-warn'] : ['snack-error'],
