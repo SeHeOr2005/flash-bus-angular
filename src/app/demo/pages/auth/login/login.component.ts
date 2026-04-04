@@ -7,8 +7,20 @@ import { HttpErrorResponse } from '@angular/common/http';
 // project import
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { AuthService } from 'src/app/@theme/services/auth.service';
-import { Observable } from 'rxjs';
+import { from, Observable, switchMap } from 'rxjs';
 import { User } from 'src/app/@theme/types/roles';
+import { environment } from 'src/environments/environment';
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      enterprise: {
+        ready: (callback: () => void) => void;
+        execute: (siteKey: string, options: { action: string }) => Promise<string>;
+      };
+    };
+  }
+}
 
 @Component({
   selector: 'app-login',
@@ -25,6 +37,7 @@ export default class LoginComponent {
   socialLoading = false;
   errorMessage = '';
   sessionExpiredMessage = '';
+  private recaptchaScriptLoadingPromise: Promise<void> | null = null;
 
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -49,21 +62,87 @@ export default class LoginComponent {
       this.email.markAsTouched();
       return;
     }
+
+    if (environment.recaptcha.enabled && !environment.recaptcha.siteKey) {
+      this.errorMessage = 'reCAPTCHA no configurado. Contacta al administrador.';
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
     this.cdr.markForCheck();
-    this.authService.login(this.emailValue, this.password).subscribe({
+
+    from(this.getRecaptchaEnterpriseToken()).pipe(
+      switchMap((recaptchaToken) => this.authService.login(this.emailValue, this.password, recaptchaToken))
+    ).subscribe({
       next: () => {
         this.loading = false;
         this.cdr.markForCheck();
         this.router.navigate(['/dashboard']);
       },
-      error: () => {
-        this.errorMessage = 'Correo o contraseña incorrectos';
+      error: (error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 403) {
+          this.errorMessage = 'No se pudo validar reCAPTCHA. Intenta nuevamente.';
+        } else {
+          this.errorMessage = 'Correo o contraseña incorrectos';
+        }
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private async getRecaptchaEnterpriseToken(): Promise<string> {
+    if (!environment.recaptcha.enabled) {
+      return '';
+    }
+
+    await this.loadRecaptchaEnterpriseScript();
+
+    return new Promise<string>((resolve, reject) => {
+      if (!window.grecaptcha?.enterprise) {
+        reject(new Error('reCAPTCHA Enterprise no disponible en ventana global.'));
+        return;
+      }
+
+      window.grecaptcha.enterprise.ready(() => {
+        window.grecaptcha?.enterprise.execute(environment.recaptcha.siteKey, { action: environment.recaptcha.action })
+          .then(resolve)
+          .catch(reject);
+      });
+    });
+  }
+
+  private loadRecaptchaEnterpriseScript(): Promise<void> {
+    if (window.grecaptcha?.enterprise) {
+      return Promise.resolve();
+    }
+
+    if (this.recaptchaScriptLoadingPromise) {
+      return this.recaptchaScriptLoadingPromise;
+    }
+
+    const scriptSrc = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(environment.recaptcha.siteKey)}`;
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${scriptSrc}"]`);
+
+    this.recaptchaScriptLoadingPromise = new Promise<void>((resolve, reject) => {
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(), { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar reCAPTCHA Enterprise.')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = scriptSrc;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('No se pudo cargar reCAPTCHA Enterprise.'));
+      document.head.appendChild(script);
+    });
+
+    return this.recaptchaScriptLoadingPromise;
   }
 
   onGoogleLogin() {

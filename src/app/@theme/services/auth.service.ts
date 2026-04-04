@@ -125,9 +125,9 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string): Observable<User> {
+  login(email: string, password: string, recaptchaToken?: string): Observable<User> {
     if (!this.isFirebaseConfigured()) {
-      return this.loginWithBackendPassword(email, password);
+      return this.loginWithBackendPassword(email, password, recaptchaToken);
     }
 
     const auth = this.getFirebaseAuth();
@@ -149,15 +149,15 @@ export class AuthService {
       }),
       catchError((error: unknown) => {
         if (this.shouldFallbackToBackendPassword(error)) {
-          return this.loginWithBackendPassword(email, password);
+          return this.loginWithBackendPassword(email, password, recaptchaToken);
         }
         return throwError(() => error);
       })
     );
   }
 
-  loginWithBackendCredentials(email: string, password: string): Observable<User> {
-    return this.loginWithBackendPassword(email, password);
+  loginWithBackendCredentials(email: string, password: string, recaptchaToken?: string): Observable<User> {
+    return this.loginWithBackendPassword(email, password, recaptchaToken);
   }
 
   loginWithGoogle(): Observable<User> {
@@ -417,8 +417,8 @@ export class AuthService {
     return response.token ?? response.accessToken ?? response.jwt ?? response.data?.token ?? response.data?.accessToken ?? response.data?.jwt ?? null;
   }
 
-  private loginWithBackendPassword(email: string, password: string): Observable<User> {
-    return this.http.post<{ token: string }>(`${this.API}/security/login`, { email, password }).pipe(
+  private loginWithBackendPassword(email: string, password: string, recaptchaToken?: string): Observable<User> {
+    return this.http.post<{ token: string }>(`${this.API}/security/login`, { email, password, recaptchaToken }).pipe(
       switchMap(({ token }) => this.hydrateSessionFromBackendToken(token))
     );
   }

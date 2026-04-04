@@ -5,6 +5,11 @@ export const environment = {
   production: true,
   apiUrl: 'http://localhost:8080',
   googleAuthEndpoint: '/security/oauth/login',
+  recaptcha: {
+    enabled: true,
+    siteKey: '6LcSqqUsAAAAAFMKRcjte2kT0A9gUjBdsZg5DnEO',
+    action: 'login'
+  },
   firebase: {
     apiKey: 'AIzaSyCcU-cd8mHfAS7ioRh2rsQkt5yQRZOKpX0',
     authDomain: 'flashbusangular.firebaseapp.com',
