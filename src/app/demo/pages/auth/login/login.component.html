@@ -91,7 +91,7 @@
 
           <div class="check-me">
             <mat-checkbox checked color="primary">Recuérdame</mat-checkbox>
-            <a class="forgot-link" href="javascript:">¿Olvidaste tu contraseña?</a>
+            <a class="forgot-link" [routerLink]="['/auth/forgot-password']">¿Olvidaste tu contraseña?</a>
           </div>
 
           @if (errorMessage) {

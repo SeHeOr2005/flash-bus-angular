@@ -5,7 +5,10 @@
   "compilerOptions": {
     "types": []
   },
-  "files": ["src/main.ts"],
+  "files": [
+    "src/main.ts",
+    "src/app/demo/pages/auth/forgot-password/forgot-password.component.ts"
+  ],
   "include": ["src/**/*.d.ts"],
   "exclude": ["src/app/@theme/services/firebase/**"]
 }

@@ -35,6 +35,10 @@ interface GoogleSyncResponse {
   };
 }
 
+interface PasswordRecoveryResponse {
+  message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUserFromStorage());
@@ -158,6 +162,21 @@ export class AuthService {
 
   loginWithBackendCredentials(email: string, password: string, recaptchaToken?: string): Observable<User> {
     return this.loginWithBackendPassword(email, password, recaptchaToken);
+  }
+
+  requestPasswordRecovery(email: string, recaptchaToken?: string): Observable<PasswordRecoveryResponse> {
+    return this.http.post<PasswordRecoveryResponse>(`${this.API}/security/password-recovery/request`, {
+      email,
+      recaptchaToken
+    });
+  }
+
+  resetPassword(token: string, newPassword: string, recaptchaToken?: string): Observable<PasswordRecoveryResponse> {
+    return this.http.post<PasswordRecoveryResponse>(`${this.API}/security/password-recovery/reset`, {
+      token,
+      newPassword,
+      recaptchaToken
+    });
   }
 
   loginWithGoogle(): Observable<User> {
