@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 // project import
 import { SharedModule } from 'src/app/demo/shared/shared.module';
-import { AuthService } from 'src/app/@theme/services/auth.service';
+import { AuthService, TwoFactorChallenge } from 'src/app/@theme/services/auth.service';
 import { from, Observable, switchMap } from 'rxjs';
 import { User } from 'src/app/@theme/types/roles';
 import { environment } from 'src/environments/environment';
@@ -76,9 +76,15 @@ export default class LoginComponent {
     from(this.getRecaptchaEnterpriseToken()).pipe(
       switchMap((recaptchaToken) => this.authService.login(this.emailValue, this.password, recaptchaToken))
     ).subscribe({
-      next: () => {
+      next: (result) => {
         this.loading = false;
         this.cdr.markForCheck();
+
+        if (this.isTwoFactorChallenge(result)) {
+          this.router.navigate(['/auth/two-factor']);
+          return;
+        }
+
         this.router.navigate(['/dashboard']);
       },
       error: (error: unknown) => {
@@ -91,6 +97,14 @@ export default class LoginComponent {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private isTwoFactorChallenge(result: unknown): result is TwoFactorChallenge {
+    return Boolean(
+      result
+      && (result as TwoFactorChallenge).requires2fa
+      && (result as TwoFactorChallenge).challengeToken
+    );
   }
 
   private async getRecaptchaEnterpriseToken(): Promise<string> {

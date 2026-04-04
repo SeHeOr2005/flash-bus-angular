@@ -8,7 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 // project import
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { environment } from 'src/environments/environment';
-import { AuthService } from 'src/app/@theme/services/auth.service';
+import { AuthService, TwoFactorChallenge } from 'src/app/@theme/services/auth.service';
 import { Observable } from 'rxjs';
 import { User } from 'src/app/@theme/types/roles';
 
@@ -130,9 +130,15 @@ export default class RegisterComponent {
     this.http.post(`${environment.apiUrl}/api/users/register`, { name, email: this.email.value, password: this.password }).subscribe({
       next: () => {
         this.authService.loginWithBackendCredentials(this.email.value || '', this.password).subscribe({
-          next: () => {
+          next: (result) => {
             this.loading = false;
             this.cdr.markForCheck();
+
+            if (this.isTwoFactorChallenge(result)) {
+              this.router.navigate(['/auth/two-factor']);
+              return;
+            }
+
             this.router.navigate(['/dashboard']);
           },
           error: () => {
@@ -158,6 +164,14 @@ export default class RegisterComponent {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private isTwoFactorChallenge(result: unknown): result is TwoFactorChallenge {
+    return Boolean(
+      result
+      && (result as TwoFactorChallenge).requires2fa
+      && (result as TwoFactorChallenge).challengeToken
+    );
   }
 
   onGoogleRegister() {

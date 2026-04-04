@@ -1,0 +1,106 @@
+<div class="auth-main">
+  <div class="auth-wrapper version-1">
+
+    <div class="auth-side-panel">
+      <div class="side-decoration">
+        <div class="deco-circle deco-1"></div>
+        <div class="deco-circle deco-2"></div>
+        <div class="deco-circle deco-3"></div>
+      </div>
+      <div class="side-content">
+        <img src="assets/images/flash-bus-logo.png" alt="Flash Bus" class="side-logo" />
+        <h2 class="side-title">Verificación de acceso</h2>
+        <p class="side-tagline">Un paso extra para proteger tu cuenta antes de ingresar</p>
+        <ul class="side-features">
+          <li>
+            <i class="ti ti-mail-check"></i>
+            <span>Código enviado a tu correo en cada inicio de sesión</span>
+          </li>
+          <li>
+            <i class="ti ti-lock"></i>
+            <span>Máximo 3 intentos por solicitud</span>
+          </li>
+          <li>
+            <i class="ti ti-clock-hour-4"></i>
+            <span>Tiempo limitado de validez para cada código</span>
+          </li>
+          <li>
+            <i class="ti ti-shield-check"></i>
+            <span>La sesión parcial se invalida al cerrar la ventana</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="auth-form">
+      <div class="main-form">
+        <app-card [showHeader]="false" class="auth-form-card" [padding]="40">
+          <div class="text-center">
+            <img src="assets/images/flash-bus-logo.png" alt="logo" class="form-logo" />
+            <h3 class="form-title">Verificación 2FA</h3>
+            <p class="form-subtitle">Ingresa el código de 6 dígitos enviado a {{ maskedEmail }}</p>
+          </div>
+
+          <div class="separator">
+            <span>confirmar identidad</span>
+          </div>
+
+          <div class="text-start">
+            <label class="field-label">Código de verificación</label>
+            <mat-form-field appearance="outline" class="w-100 m-t-5">
+              <input
+                matInput
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+                [value]="code"
+                (input)="onCodeInput($event)"
+                (paste)="onCodePaste($event)"
+                (keyup.enter)="submitCode()"
+              />
+            </mat-form-field>
+          </div>
+
+          <div class="timer-box m-t-5">
+            <i class="ti ti-clock-hour-4"></i>
+            <span>Validez del código: {{ formattedTime }}</span>
+          </div>
+
+          <div class="assist-text m-t-10">
+            <span>¿No recibiste el código? Revisa spam o usa reenviar cuando el contador termine.</span>
+          </div>
+
+          @if (warningMessage) {
+            <div class="error-banner m-t-10">
+              <i class="ti ti-alert-circle"></i>
+              <span>{{ warningMessage }}</span>
+            </div>
+          }
+
+          @if (infoMessage) {
+            <div class="success-banner m-t-10">
+              <i class="ti ti-circle-check"></i>
+              <span>{{ infoMessage }}</span>
+            </div>
+          }
+
+          <div class="grid m-t-15">
+            <button mat-flat-button color="primary" class="login-btn" [disabled]="loading || code.length !== 6" (click)="submitCode()">
+              {{ loading ? 'Validando...' : 'Verificar código' }}
+            </button>
+          </div>
+
+          <div class="actions-row m-t-10">
+            <button mat-stroked-button color="primary" [disabled]="!canResend" (click)="resendCode()">
+              {{ resendLoading ? 'Reenviando...' : 'Reenviar código' }}
+            </button>
+            <button mat-button type="button" class="text-muted" (click)="cancelAndBackToLogin()">Cancelar</button>
+          </div>
+        </app-card>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,61 @@
+.timer-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #edf4ff;
+  border: 1px solid #bfd6ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #17408f;
+
+  i {
+    font-size: 1.05rem;
+    color: #1c76da;
+  }
+
+  span {
+    font-size: 0.84rem;
+    font-weight: 500;
+  }
+}
+
+.assist-text {
+  span {
+    font-size: 0.8rem;
+    color: #6f7f8f;
+    line-height: 1.5;
+  }
+}
+
+.actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+
+  button {
+    border-radius: 10px;
+  }
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e9f9ef;
+  border: 1px solid #86d9a3;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #0f5e2f;
+
+  i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    color: #16a34a;
+  }
+
+  span {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+}

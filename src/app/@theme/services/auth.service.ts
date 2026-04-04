@@ -39,6 +39,36 @@ interface PasswordRecoveryResponse {
   message: string;
 }
 
+export interface TwoFactorChallenge {
+  requires2fa: true;
+  challengeToken: string;
+  maskedEmail: string;
+  expiresAt: number;
+  remainingAttempts: number;
+}
+
+interface LoginApiResponse {
+  token?: string;
+  requires2fa?: boolean;
+  challengeToken?: string;
+  maskedEmail?: string;
+  expiresAt?: number;
+  remainingAttempts?: number;
+}
+
+interface TwoFactorVerifyResponse {
+  token: string;
+}
+
+interface TwoFactorResendResponse {
+  message: string;
+  expiresAt: number;
+  remainingAttempts: number;
+  maskedEmail: string;
+}
+
+export type LoginResult = User | TwoFactorChallenge;
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(this.loadUserFromStorage());
@@ -46,6 +76,7 @@ export class AuthService {
   public activeRole = signal<UserRole | null>(this.loadActiveRoleFromStorage());
   private firebaseAuth: Auth | null = null;
   private trustedToken: string | null = this.getStoredTokenIfValid();
+  private readonly TWO_FACTOR_STORAGE_KEY = 'pendingTwoFactorChallenge';
 
   private http = inject(HttpClient);
   private readonly API = environment.apiUrl;
@@ -129,7 +160,7 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, recaptchaToken?: string): Observable<User> {
+  login(email: string, password: string, recaptchaToken?: string): Observable<LoginResult> {
     if (!this.isFirebaseConfigured()) {
       return this.loginWithBackendPassword(email, password, recaptchaToken);
     }
@@ -160,8 +191,97 @@ export class AuthService {
     );
   }
 
-  loginWithBackendCredentials(email: string, password: string, recaptchaToken?: string): Observable<User> {
+  loginWithBackendCredentials(email: string, password: string, recaptchaToken?: string): Observable<LoginResult> {
     return this.loginWithBackendPassword(email, password, recaptchaToken);
+  }
+
+  verifyTwoFactorCode(challengeToken: string, code: string): Observable<User> {
+    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+
+    return this.http.post<TwoFactorVerifyResponse>(
+      `${this.API}/security/2fa/verify`,
+      { challengeToken, code },
+      { context: allowLocal401Handling }
+    ).pipe(
+      switchMap(({ token }) => {
+        this.clearPendingTwoFactorChallenge();
+        return this.hydrateSessionFromBackendToken(token);
+      })
+    );
+  }
+
+  resendTwoFactorCode(challengeToken: string): Observable<TwoFactorChallenge> {
+    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+
+    return this.http.post<TwoFactorResendResponse>(
+      `${this.API}/security/2fa/resend`,
+      { challengeToken },
+      { context: allowLocal401Handling }
+    ).pipe(
+      map((response) => {
+        const challenge: TwoFactorChallenge = {
+          requires2fa: true,
+          challengeToken,
+          maskedEmail: response.maskedEmail,
+          expiresAt: response.expiresAt,
+          remainingAttempts: response.remainingAttempts
+        };
+        this.savePendingTwoFactorChallenge(challenge);
+        return challenge;
+      })
+    );
+  }
+
+  cancelPendingTwoFactorChallenge(): Observable<void> {
+    const challenge = this.getPendingTwoFactorChallenge();
+    if (!challenge) {
+      return of(void 0);
+    }
+
+    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+
+    return this.http.post(
+      `${this.API}/security/2fa/cancel`,
+      { challengeToken: challenge.challengeToken },
+      { context: allowLocal401Handling }
+    ).pipe(
+      map(() => {
+        this.clearPendingTwoFactorChallenge();
+      }),
+      catchError(() => {
+        this.clearPendingTwoFactorChallenge();
+        return of(void 0);
+      })
+    );
+  }
+
+  cancelPendingTwoFactorChallengeWithBeacon(challengeToken: string): void {
+    if (!challengeToken || typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {
+      return;
+    }
+
+    navigator.sendBeacon(`${this.API}/security/2fa/cancel/${encodeURIComponent(challengeToken)}`);
+  }
+
+  savePendingTwoFactorChallenge(challenge: TwoFactorChallenge): void {
+    sessionStorage.setItem(this.TWO_FACTOR_STORAGE_KEY, JSON.stringify(challenge));
+  }
+
+  getPendingTwoFactorChallenge(): TwoFactorChallenge | null {
+    const challengeStr = sessionStorage.getItem(this.TWO_FACTOR_STORAGE_KEY);
+    if (!challengeStr) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(challengeStr) as TwoFactorChallenge;
+    } catch {
+      return null;
+    }
+  }
+
+  clearPendingTwoFactorChallenge(): void {
+    sessionStorage.removeItem(this.TWO_FACTOR_STORAGE_KEY);
   }
 
   requestPasswordRecovery(email: string, recaptchaToken?: string): Observable<PasswordRecoveryResponse> {
@@ -274,6 +394,7 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('activeRole');
     localStorage.removeItem('token');
+    this.clearPendingTwoFactorChallenge();
     this.trustedToken = null;
     this.currentUserSubject.next(null);
     this.activeRole.set(null);
@@ -436,9 +557,27 @@ export class AuthService {
     return response.token ?? response.accessToken ?? response.jwt ?? response.data?.token ?? response.data?.accessToken ?? response.data?.jwt ?? null;
   }
 
-  private loginWithBackendPassword(email: string, password: string, recaptchaToken?: string): Observable<User> {
-    return this.http.post<{ token: string }>(`${this.API}/security/login`, { email, password, recaptchaToken }).pipe(
-      switchMap(({ token }) => this.hydrateSessionFromBackendToken(token))
+  private loginWithBackendPassword(email: string, password: string, recaptchaToken?: string): Observable<LoginResult> {
+    return this.http.post<LoginApiResponse>(`${this.API}/security/login`, { email, password, recaptchaToken }).pipe(
+      switchMap((response) => {
+        if (response.requires2fa && response.challengeToken && response.maskedEmail && response.expiresAt) {
+          const challenge: TwoFactorChallenge = {
+            requires2fa: true,
+            challengeToken: response.challengeToken,
+            maskedEmail: response.maskedEmail,
+            expiresAt: response.expiresAt,
+            remainingAttempts: response.remainingAttempts ?? 3
+          };
+          this.savePendingTwoFactorChallenge(challenge);
+          return of(challenge);
+        }
+
+        if (response.token) {
+          return this.hydrateSessionFromBackendToken(response.token);
+        }
+
+        return throwError(() => new Error('Respuesta de login no válida.'));
+      })
     );
   }
 

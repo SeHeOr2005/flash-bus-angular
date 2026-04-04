@@ -7,7 +7,8 @@
   },
   "files": [
     "src/main.ts",
-    "src/app/demo/pages/auth/forgot-password/forgot-password.component.ts"
+    "src/app/demo/pages/auth/forgot-password/forgot-password.component.ts",
+    "src/app/demo/pages/auth/two-factor/two-factor.component.ts"
   ],
   "include": ["src/**/*.d.ts"],
   "exclude": ["src/app/@theme/services/firebase/**"]

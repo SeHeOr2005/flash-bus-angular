@@ -16,6 +16,10 @@ const routes: Routes = [
       {
         path: 'forgot-password',
         loadComponent: () => import('./forgot-password/forgot-password.component')
+      },
+      {
+        path: 'two-factor',
+        loadComponent: () => import('./two-factor/two-factor.component')
       }
     ]
   }
