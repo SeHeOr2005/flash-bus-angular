@@ -22,6 +22,24 @@ export class NavRightComponent {
   private dialog = inject(MatDialog);
 
   currentUser$ = this.authService.currentUser$;
+  private failedAvatarUrl: string | null = null;
+
+  getAvatarUrl(avatar: string | null | undefined): string {
+    return avatar?.trim() || '';
+  }
+
+  hasAvatar(avatar: string | null | undefined): boolean {
+    const normalizedAvatar = avatar?.trim() || '';
+    return Boolean(normalizedAvatar) && normalizedAvatar !== this.failedAvatarUrl;
+  }
+
+  onAvatarLoad(): void {
+    this.failedAvatarUrl = null;
+  }
+
+  onAvatarError(avatar: string | null | undefined): void {
+    this.failedAvatarUrl = avatar?.trim() || null;
+  }
 
   getInitials(name: string | undefined): string {
     if (!name) return '?';

@@ -90,6 +90,25 @@
   background-image: url('../../../../../assets/images/layout/img-profile-card.jpg');
 }
 
+.user-avatar-image,
+.user-avatar-lg {
+  object-fit: cover;
+}
+
+.user-avatar-image {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-avatar-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 // Avatar con iniciales (pequeño, en la barra)
 .user-avatar-initials {
   width: 36px;

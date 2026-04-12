@@ -21,6 +21,7 @@ interface BackendCurrentUserContext {
     id?: string;
     name?: string;
     email?: string;
+    avatar?: string | null;
     authProvider?: string | null;
   };
   roles?: string[];
@@ -35,6 +36,7 @@ interface GoogleSyncResponse {
     id?: string;
     name?: string;
     email?: string;
+    avatar?: string | null;
     authProvider?: string | null;
   };
   roles?: string[];
@@ -320,11 +322,13 @@ export class AuthService {
 
     return from(signInWithPopup(auth, provider)).pipe(
       switchMap(async ({ user: firebaseUser }) => ({
-        idToken: await firebaseUser.getIdToken()
+        idToken: await firebaseUser.getIdToken(),
+        photoURL: firebaseUser.photoURL
       })),
-      switchMap(({ idToken }) =>
+      switchMap(({ idToken, photoURL }) =>
         this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
-          firebaseIdToken: idToken
+          firebaseIdToken: idToken,
+          avatarUrl: photoURL
         })
       ),
       switchMap((response) => {
@@ -344,11 +348,13 @@ export class AuthService {
 
     return from(signInWithPopup(auth, provider)).pipe(
       switchMap(async ({ user: firebaseUser }) => ({
-        idToken: await firebaseUser.getIdToken()
+        idToken: await firebaseUser.getIdToken(),
+        photoURL: firebaseUser.photoURL
       })),
-      switchMap(({ idToken }) =>
+      switchMap(({ idToken, photoURL }) =>
         this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
-          firebaseIdToken: idToken
+          firebaseIdToken: idToken,
+          avatarUrl: photoURL
         })
       ),
       switchMap((response) => {
@@ -367,11 +373,13 @@ export class AuthService {
 
     return from(signInWithPopup(auth, provider)).pipe(
       switchMap(async ({ user: firebaseUser }) => ({
-        idToken: await firebaseUser.getIdToken()
+        idToken: await firebaseUser.getIdToken(),
+        photoURL: firebaseUser.photoURL
       })),
-      switchMap(({ idToken }) =>
+      switchMap(({ idToken, photoURL }) =>
         this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
-          firebaseIdToken: idToken
+          firebaseIdToken: idToken,
+          avatarUrl: photoURL
         })
       ),
       switchMap((response) => {
@@ -392,6 +400,7 @@ export class AuthService {
         id: string;
         name: string;
         email: string;
+        avatar?: string | null;
         authProvider?: string | null;
       }>(`${this.API}/api/users/${user.id}`, { name, email, password, unlinkSocialAccount })
       .pipe(
@@ -401,6 +410,7 @@ export class AuthService {
             ...user,
             name: updated.name,
             email: updated.email,
+            avatar: Object.prototype.hasOwnProperty.call(updated, 'avatar') ? (updated.avatar ?? null) : (user.avatar ?? null),
             authProvider: hasAuthProviderField ? (updated.authProvider ?? null) : (user.authProvider ?? null)
           };
           localStorage.setItem('currentUser', JSON.stringify(updatedUser));
@@ -535,6 +545,7 @@ export class AuthService {
       id: payload['id'] as string,
       name: payload['name'] as string,
       email: payload['email'] as string,
+      avatar: payload['avatar'] as string | null | undefined,
       authProvider: null,
       rolesFallback: []
     });
@@ -557,6 +568,7 @@ export class AuthService {
       id: oauthUser?.id ?? (payload['id'] as string),
       name: oauthUser?.name ?? (payload['name'] as string),
       email: oauthUser?.email ?? (payload['email'] as string),
+      avatar: oauthUser?.avatar ?? (payload['avatar'] as string | null | undefined),
       authProvider: oauthUser?.authProvider ?? null,
       rolesFallback: oauthRoles
     });
@@ -566,6 +578,7 @@ export class AuthService {
     id: string;
     name: string;
     email: string;
+    avatar?: string | null;
     authProvider?: string | null;
     rolesFallback: UserRole[];
   }): Observable<User> {
@@ -586,6 +599,7 @@ export class AuthService {
           id: ctx.user?.id ?? fallback.id,
           name: ctx.user?.name ?? fallback.name,
           email: ctx.user?.email ?? fallback.email,
+          avatar: ctx.user?.avatar ?? fallback.avatar ?? null,
           authProvider: ctx.user?.authProvider ?? fallback.authProvider ?? null,
           roles: finalRoles.length > 0 ? finalRoles : [UserRole.CIUDADANO],
           activeRole: finalRoles.length > 0 ? finalRoles[0] : UserRole.CIUDADANO,
@@ -604,6 +618,7 @@ export class AuthService {
             id: fallback.id,
             name: fallback.name,
             email: fallback.email,
+            avatar: fallback.avatar ?? null,
             authProvider: fallback.authProvider ?? null,
             roles: fallback.rolesFallback.length > 0 ? fallback.rolesFallback : [UserRole.CIUDADANO],
             activeRole: fallback.rolesFallback.length > 0 ? fallback.rolesFallback[0] : UserRole.CIUDADANO,

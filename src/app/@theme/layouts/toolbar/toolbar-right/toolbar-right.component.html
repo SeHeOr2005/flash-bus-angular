@@ -5,9 +5,15 @@
   <button mat-button [matMenuTriggerFor]="user" aria-label="perfil" class="header-item">
     <a class="pc-head-link">
       <ng-container *ngIf="currentUser$ | async as u; else defaultAvatar">
-        <div class="user-avatar-initials" [title]="u.name">
-          {{ getInitials(u.name) }}
-        </div>
+        <ng-container *ngIf="hasAvatar(u.avatar); else initialsAvatar">
+          <img [src]="getAvatarUrl(u.avatar)" [alt]="u.name" class="user-avatar user-avatar-image"
+            (load)="onAvatarLoad()" (error)="onAvatarError(u.avatar)" />
+        </ng-container>
+        <ng-template #initialsAvatar>
+          <div class="user-avatar-initials" [title]="u.name">
+            {{ getInitials(u.name) }}
+          </div>
+        </ng-template>
       </ng-container>
       <ng-template #defaultAvatar>
         <img src="assets/images/user/avatar-2.jpg" alt="user-image" class="user-avatar" />
@@ -27,9 +33,15 @@
         <!-- Info del usuario -->
         <ng-container *ngIf="currentUser$ | async as u">
           <div class="flex m-b-5 align-items-center">
-            <div class="user-avatar-initials-lg flex-shrink-0">
-              {{ getInitials(u.name) }}
-            </div>
+            <ng-container *ngIf="hasAvatar(u.avatar); else initialsAvatarLg">
+              <img [src]="getAvatarUrl(u.avatar)" [alt]="u.name" class="user-avatar-lg flex-shrink-0"
+                (load)="onAvatarLoad()" (error)="onAvatarError(u.avatar)" />
+            </ng-container>
+            <ng-template #initialsAvatarLg>
+              <div class="user-avatar-initials-lg flex-shrink-0">
+                {{ getInitials(u.name) }}
+              </div>
+            </ng-template>
             <div class="topic-description m-l-15">
               <h6 class="user-name m-b-2">{{ u.name }}</h6>
               <p class="mat-body text-muted m-b-0">{{ u.email }}</p>

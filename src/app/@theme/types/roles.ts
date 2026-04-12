@@ -48,11 +48,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  avatar?: string | null;
   authProvider?: string | null;
   roles: UserRole[];
   activeRole: UserRole;
   permissions: UserPermission[];
-  avatar?: string;
 }
 
 export interface AuthResponse {
