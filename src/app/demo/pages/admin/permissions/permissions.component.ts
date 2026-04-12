@@ -24,8 +24,17 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 @Component({
   selector: 'app-permission-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-            MatFormFieldModule, MatInputModule, MatIconModule, MatProgressSpinnerModule, MatSelectModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSelectModule
+  ],
   template: `
     <h2 mat-dialog-title class="dialog-title">
       <mat-icon>{{ data ? 'edit' : 'add_circle' }}</mat-icon>
@@ -33,7 +42,6 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
     </h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form-content">
-
         <mat-form-field appearance="outline" class="w-100 m-b-12">
           <mat-label>URL del endpoint</mat-label>
           <mat-icon matPrefix>link</mat-icon>
@@ -60,7 +68,6 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
           <mat-hint>Módulo al que pertenece este endpoint</mat-hint>
           <mat-error *ngIf="form.get('model')?.hasError('required')">El módulo es requerido</mat-error>
         </mat-form-field>
-
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -70,27 +77,59 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .dialog-title { display:flex;align-items:center;gap:8px; }
-    .form-content { padding-top:8px;min-width:400px; }
-    .w-100 { width:100%; }
-    .m-b-12 { margin-bottom:12px; }
-    .method-opt { font-weight:700;padding:2px 6px;border-radius:4px; }
-    .method-get    { background:#e3f2fd;color:#1565c0; }
-    .method-post   { background:#e8f5e9;color:#2e7d32; }
-    .method-put    { background:#fff3e0;color:#e65100; }
-    .method-delete { background:#fce4ec;color:#c62828; }
-    .method-patch  { background:#f3e5f5;color:#6a1b9a; }
-  `]
+  styles: [
+    `
+      .dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .form-content {
+        padding-top: 8px;
+        min-width: 400px;
+      }
+      .w-100 {
+        width: 100%;
+      }
+      .m-b-12 {
+        margin-bottom: 12px;
+      }
+      .method-opt {
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .method-get {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .method-post {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .method-put {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .method-delete {
+        background: #fce4ec;
+        color: #c62828;
+      }
+      .method-patch {
+        background: #f3e5f5;
+        color: #6a1b9a;
+      }
+    `
+  ]
 })
 export class PermissionFormDialogComponent {
   private fb = inject(FormBuilder);
   methods = HTTP_METHODS;
 
   form = this.fb.group({
-    url:    [this.data?.url    ?? '', Validators.required],
+    url: [this.data?.url ?? '', Validators.required],
     method: [this.data?.method ?? '', Validators.required],
-    model:  [this.data?.model  ?? '', Validators.required]
+    model: [this.data?.model ?? '', Validators.required]
   });
 
   constructor(
@@ -104,7 +143,7 @@ export class PermissionFormDialogComponent {
   }
 
   methodClass(m: string): string {
-    return { GET:'method-get', POST:'method-post', PUT:'method-put', DELETE:'method-delete', PATCH:'method-patch' }[m] ?? '';
+    return { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' }[m] ?? '';
   }
 }
 
@@ -113,10 +152,18 @@ export class PermissionFormDialogComponent {
   selector: 'app-permissions',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, SharedModule,
-    MatTableModule, MatButtonModule, MatIconModule, MatInputModule,
-    MatFormFieldModule, MatProgressSpinnerModule, MatSnackBarModule,
-    MatTooltipModule, MatDialogModule,
+    CommonModule,
+    FormsModule,
+    SharedModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    MatDialogModule,
     HasPermissionDirective
   ],
   templateUrl: './permissions.component.html',
@@ -124,16 +171,16 @@ export class PermissionFormDialogComponent {
 })
 export default class PermissionsComponent implements OnInit {
   private roleService = inject(RoleService);
-  private snackBar    = inject(MatSnackBar);
-  private dialog      = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   displayedColumns = ['method', 'url', 'model', 'actions'];
 
-  permissions  = signal<BackendPermission[]>([]);
-  filtered     = signal<BackendPermission[]>([]);
-  loading      = signal(false);
+  permissions = signal<BackendPermission[]>([]);
+  filtered = signal<BackendPermission[]>([]);
+  loading = signal(false);
   errorMessage = signal('');
-  searchQuery  = '';
+  searchQuery = '';
 
   ngOnInit(): void {
     this.loadPermissions();
@@ -160,26 +207,30 @@ export default class PermissionsComponent implements OnInit {
       return;
     }
     this.filtered.set(
-      this.permissions().filter(p =>
-        p.url?.toLowerCase().includes(q) ||
-        p.method?.toLowerCase().includes(q) ||
-        p.model?.toLowerCase().includes(q)
+      this.permissions().filter(
+        (p) => p.url?.toLowerCase().includes(q) || p.method?.toLowerCase().includes(q) || p.model?.toLowerCase().includes(q)
       )
     );
   }
 
   openPermissionForm(perm: BackendPermission | null = null): void {
     const ref = this.dialog.open(PermissionFormDialogComponent, { data: perm, width: '460px' });
-    ref.afterClosed().subscribe(result => {
+    ref.afterClosed().subscribe((result) => {
       if (!result) return;
       if (perm) {
         this.roleService.updatePermission(perm.id, result).subscribe({
-          next: () => { this.snackBar.open('Permiso actualizado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); this.loadPermissions(); },
+          next: () => {
+            this.snackBar.open('Permiso actualizado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+            this.loadPermissions();
+          },
           error: () => this.snackBar.open('Error al actualizar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
         });
       } else {
         this.roleService.createPermission(result).subscribe({
-          next: () => { this.snackBar.open('Permiso creado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); this.loadPermissions(); },
+          next: () => {
+            this.snackBar.open('Permiso creado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+            this.loadPermissions();
+          },
           error: () => this.snackBar.open('Error al crear el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
         });
       }
@@ -203,8 +254,8 @@ export default class PermissionsComponent implements OnInit {
 
       this.roleService.deletePermission(perm.id).subscribe({
         next: () => {
-          this.permissions.update(l => l.filter(p => p.id !== perm.id));
-          this.filtered.update(l => l.filter(p => p.id !== perm.id));
+          this.permissions.update((l) => l.filter((p) => p.id !== perm.id));
+          this.filtered.update((l) => l.filter((p) => p.id !== perm.id));
           this.snackBar.open('Permiso eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
         },
         error: () => this.snackBar.open('Error al eliminar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
@@ -213,6 +264,6 @@ export default class PermissionsComponent implements OnInit {
   }
 
   methodClass(method: string): string {
-    return { GET:'badge-get', POST:'badge-post', PUT:'badge-put', DELETE:'badge-delete', PATCH:'badge-patch' }[method] ?? '';
+    return { GET: 'badge-get', POST: 'badge-post', PUT: 'badge-put', DELETE: 'badge-delete', PATCH: 'badge-patch' }[method] ?? '';
   }
 }
