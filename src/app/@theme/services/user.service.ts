@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { SKIP_AUTH_401_REDIRECT } from '../interceptors/auth-context.tokens';
 
 export interface BackendUser {
   id: string;
@@ -56,7 +57,10 @@ export class UserService {
   }
 
   getAllUserRoles(): Observable<BackendUserRole[]> {
-    return this.http.get<BackendUserRole[]>(`${this.API}/user-role`);
+    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+    return this.http.get<BackendUserRole[]>(`${this.API}/user-role`, {
+      context: allowLocal401Handling
+    });
   }
 
   getUserRoles(userId: string): Observable<BackendUserRole[]> {

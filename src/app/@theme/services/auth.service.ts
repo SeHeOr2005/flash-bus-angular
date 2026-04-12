@@ -4,18 +4,27 @@ import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http
 import { User, UserRole, UserPermission } from '../types/roles';
 import { environment } from 'src/environments/environment';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GithubAuthProvider, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth';
+import {
+  getAuth,
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  signOut,
+  type Auth
+} from 'firebase/auth';
 import { SKIP_AUTH_401_REDIRECT } from '../interceptors/auth-context.tokens';
 
-interface BackendUserRole {
-  id: string;
-  user: { id: string; name: string; email: string };
-  role: { id: string; name: string; description: string };
-}
-
-interface BackendRolePermission {
-  id: string;
-  permission: { id: string; url: string; method: string; model: string };
+interface BackendCurrentUserContext {
+  user?: {
+    id?: string;
+    name?: string;
+    email?: string;
+    authProvider?: string | null;
+  };
+  roles?: string[];
+  permissions?: Array<{ url?: string; method?: string }>;
 }
 
 interface GoogleSyncResponse {
@@ -26,6 +35,7 @@ interface GoogleSyncResponse {
     id?: string;
     name?: string;
     email?: string;
+    authProvider?: string | null;
   };
   roles?: string[];
   data?: {
@@ -90,7 +100,8 @@ export class AuthService {
   }
 
   hasStoredToken(): boolean {
-    return Boolean(localStorage.getItem('token'));
+    const token = this.normalizeToken(localStorage.getItem('token'));
+    return Boolean(token);
   }
 
   /**
@@ -98,7 +109,7 @@ export class AuthService {
    * del token en localStorage sin esperar navegación o request al backend.
    */
   assertSessionIntegrityOnInteraction(): boolean {
-    const token = localStorage.getItem('token');
+    const token = this.normalizeToken(localStorage.getItem('token'));
 
     if (!token) {
       if (this.currentUserSubject.value) {
@@ -127,7 +138,7 @@ export class AuthService {
   }
 
   validateStoredSession(): Observable<boolean> {
-    const token = localStorage.getItem('token');
+    const token = this.normalizeToken(localStorage.getItem('token'));
     if (!token || !this.isTokenStructurallyValid(token)) {
       this.logout();
       return of(false);
@@ -165,28 +176,38 @@ export class AuthService {
       return this.loginWithBackendPassword(email, password, recaptchaToken);
     }
 
-    const auth = this.getFirebaseAuth();
-    return from(signInWithEmailAndPassword(auth, email, password)).pipe(
-      switchMap(async ({ user: firebaseUser }) => ({
-        idToken: await firebaseUser.getIdToken()
-      })),
-      switchMap(({ idToken }) =>
-        this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
-          firebaseIdToken: idToken
-        })
-      ),
-      switchMap((response) => {
-        const token = this.extractBackendToken(response);
-        if (!token) {
-          throw new Error('El backend no devolvio un token JWT en la autenticacion Firebase.');
+    // El backend es la fuente de verdad para login por correo/contraseña.
+    // Firebase Password queda como fallback para cuentas legacy.
+    return this.loginWithBackendPassword(email, password, recaptchaToken).pipe(
+      catchError((backendError: unknown) => {
+        if (!(backendError instanceof HttpErrorResponse) || backendError.status !== 401) {
+          return throwError(() => backendError);
         }
-        return this.hydrateSessionFromOAuthResponse(response, token);
-      }),
-      catchError((error: unknown) => {
-        if (this.shouldFallbackToBackendPassword(error)) {
-          return this.loginWithBackendPassword(email, password, recaptchaToken);
-        }
-        return throwError(() => error);
+
+        const auth = this.getFirebaseAuth();
+        return from(signInWithEmailAndPassword(auth, email, password)).pipe(
+          switchMap(async ({ user: firebaseUser }) => ({
+            idToken: await firebaseUser.getIdToken()
+          })),
+          switchMap(({ idToken }) =>
+            this.http.post<GoogleSyncResponse>(`${this.API}${environment.googleAuthEndpoint}`, {
+              firebaseIdToken: idToken
+            })
+          ),
+          switchMap((response) => {
+            const token = this.extractBackendToken(response);
+            if (!token) {
+              throw new Error('El backend no devolvio un token JWT en la autenticacion Firebase.');
+            }
+            return this.hydrateSessionFromOAuthResponse(response, token);
+          }),
+          catchError((firebaseError: unknown) => {
+            if (this.shouldFallbackToBackendPassword(firebaseError)) {
+              return throwError(() => backendError);
+            }
+            return throwError(() => firebaseError);
+          })
+        );
       })
     );
   }
@@ -198,38 +219,34 @@ export class AuthService {
   verifyTwoFactorCode(challengeToken: string, code: string): Observable<User> {
     const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
 
-    return this.http.post<TwoFactorVerifyResponse>(
-      `${this.API}/security/2fa/verify`,
-      { challengeToken, code },
-      { context: allowLocal401Handling }
-    ).pipe(
-      switchMap(({ token }) => {
-        this.clearPendingTwoFactorChallenge();
-        return this.hydrateSessionFromBackendToken(token);
-      })
-    );
+    return this.http
+      .post<TwoFactorVerifyResponse>(`${this.API}/security/2fa/verify`, { challengeToken, code }, { context: allowLocal401Handling })
+      .pipe(
+        switchMap(({ token }) => {
+          this.clearPendingTwoFactorChallenge();
+          return this.hydrateSessionFromBackendToken(token);
+        })
+      );
   }
 
   resendTwoFactorCode(challengeToken: string): Observable<TwoFactorChallenge> {
     const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
 
-    return this.http.post<TwoFactorResendResponse>(
-      `${this.API}/security/2fa/resend`,
-      { challengeToken },
-      { context: allowLocal401Handling }
-    ).pipe(
-      map((response) => {
-        const challenge: TwoFactorChallenge = {
-          requires2fa: true,
-          challengeToken,
-          maskedEmail: response.maskedEmail,
-          expiresAt: response.expiresAt,
-          remainingAttempts: response.remainingAttempts
-        };
-        this.savePendingTwoFactorChallenge(challenge);
-        return challenge;
-      })
-    );
+    return this.http
+      .post<TwoFactorResendResponse>(`${this.API}/security/2fa/resend`, { challengeToken }, { context: allowLocal401Handling })
+      .pipe(
+        map((response) => {
+          const challenge: TwoFactorChallenge = {
+            requires2fa: true,
+            challengeToken,
+            maskedEmail: response.maskedEmail,
+            expiresAt: response.expiresAt,
+            remainingAttempts: response.remainingAttempts
+          };
+          this.savePendingTwoFactorChallenge(challenge);
+          return challenge;
+        })
+      );
   }
 
   cancelPendingTwoFactorChallenge(): Observable<void> {
@@ -240,19 +257,17 @@ export class AuthService {
 
     const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
 
-    return this.http.post(
-      `${this.API}/security/2fa/cancel`,
-      { challengeToken: challenge.challengeToken },
-      { context: allowLocal401Handling }
-    ).pipe(
-      map(() => {
-        this.clearPendingTwoFactorChallenge();
-      }),
-      catchError(() => {
-        this.clearPendingTwoFactorChallenge();
-        return of(void 0);
-      })
-    );
+    return this.http
+      .post(`${this.API}/security/2fa/cancel`, { challengeToken: challenge.challengeToken }, { context: allowLocal401Handling })
+      .pipe(
+        map(() => {
+          this.clearPendingTwoFactorChallenge();
+        }),
+        catchError(() => {
+          this.clearPendingTwoFactorChallenge();
+          return of(void 0);
+        })
+      );
   }
 
   cancelPendingTwoFactorChallengeWithBeacon(challengeToken: string): void {
@@ -369,19 +384,30 @@ export class AuthService {
     );
   }
 
-  updateProfile(name: string, email: string, password: string): Observable<User> {
+  updateProfile(name: string, email: string, password: string, unlinkSocialAccount = false): Observable<User> {
     const user = this.currentUserSubject.value;
     if (!user) throw new Error('No hay usuario autenticado');
-    return this.http.put<{ id: string; name: string; email: string }>(
-      `${this.API}/api/users/${user.id}`, { name, email, password }
-    ).pipe(
-      map((updated) => {
-        const updatedUser: User = { ...user, name: updated.name, email: updated.email };
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        this.currentUserSubject.next(updatedUser);
-        return updatedUser;
-      })
-    );
+    return this.http
+      .put<{
+        id: string;
+        name: string;
+        email: string;
+        authProvider?: string | null;
+      }>(`${this.API}/api/users/${user.id}`, { name, email, password, unlinkSocialAccount })
+      .pipe(
+        map((updated) => {
+          const hasAuthProviderField = Object.prototype.hasOwnProperty.call(updated, 'authProvider');
+          const updatedUser: User = {
+            ...user,
+            name: updated.name,
+            email: updated.email,
+            authProvider: hasAuthProviderField ? (updated.authProvider ?? null) : (user.authProvider ?? null)
+          };
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          this.currentUserSubject.next(updatedUser);
+          return updatedUser;
+        })
+      );
   }
 
   logout(): void {
@@ -413,7 +439,32 @@ export class AuthService {
   hasPermission(url: string, method: string): boolean {
     const user = this.currentUserSubject.value;
     if (!user?.permissions) return false;
-    return user.permissions.some(p => p.url === url && p.method === method);
+
+    const requestedMethod = method.trim().toUpperCase();
+    const requestedUrl = this.normalizePathForPermission(url);
+
+    return user.permissions.some((p) => {
+      const permissionMethod = String(p.method ?? '')
+        .trim()
+        .toUpperCase();
+      const permissionUrl = this.normalizePathForPermission(p.url ?? '');
+
+      if (!permissionMethod || !permissionUrl || permissionMethod !== requestedMethod) {
+        return false;
+      }
+
+      if (permissionUrl === requestedUrl) {
+        return true;
+      }
+
+      // Compatibilidad con permisos de recursos dinámicos (ej. /user-role/?)
+      // usados para acciones sobre IDs puntuales desde la UI.
+      if (permissionUrl.endsWith('/?') && permissionUrl.slice(0, -2) === requestedUrl) {
+        return true;
+      }
+
+      return this.matchesPermissionPath(permissionUrl, requestedUrl) || this.matchesPermissionPath(requestedUrl, permissionUrl);
+    });
   }
 
   /** Obtiene todos los permisos del usuario actual */
@@ -434,9 +485,22 @@ export class AuthService {
   }
 
   private getStoredTokenIfValid(): string | null {
-    const token = localStorage.getItem('token');
+    const token = this.normalizeToken(localStorage.getItem('token'));
     if (!token) return null;
     return this.isTokenStructurallyValid(token) ? token : null;
+  }
+
+  private normalizeToken(token: string | null | undefined): string | null {
+    if (!token) {
+      return null;
+    }
+
+    const trimmed = token.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    return trimmed.replace(/^Bearer\s+/i, '').trim();
   }
 
   private decodeJwtPayload(token: string): Record<string, unknown> {
@@ -458,61 +522,71 @@ export class AuthService {
   }
 
   private hydrateSessionFromBackendToken(token: string): Observable<User> {
-    localStorage.setItem('token', token);
-    this.trustedToken = token;
-    const payload = this.decodeJwtPayload(token);
-    const userId = payload['id'] as string;
+    const normalizedToken = this.normalizeToken(token);
+    if (!normalizedToken || !this.isTokenStructurallyValid(normalizedToken)) {
+      return throwError(() => new Error('Token JWT invalido en autenticacion.'));
+    }
 
-    return this.loadRolesAndPermissionsByUserId(userId).pipe(
-      catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && error.status === 401) {
-          return of({ roles: [] as UserRole[], permissions: [] as UserPermission[] });
-        }
-        return throwError(() => error);
-      }),
-      map(({ roles, permissions }) => {
-        const user: User = {
-          id: userId,
-          name: payload['name'] as string,
-          email: payload['email'] as string,
-          roles: roles.length > 0 ? roles : [UserRole.CIUDADANO],
-          activeRole: roles.length > 0 ? roles[0] : UserRole.CIUDADANO,
-          permissions
-        };
+    localStorage.setItem('token', normalizedToken);
+    this.trustedToken = normalizedToken;
+    const payload = this.decodeJwtPayload(normalizedToken);
 
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('activeRole', user.activeRole);
-        this.currentUserSubject.next(user);
-        this.activeRole.set(user.activeRole);
-        return user;
-      })
-    );
+    return this.loadCurrentUserContext({
+      id: payload['id'] as string,
+      name: payload['name'] as string,
+      email: payload['email'] as string,
+      authProvider: null,
+      rolesFallback: []
+    });
   }
 
   private hydrateSessionFromOAuthResponse(response: GoogleSyncResponse, token: string): Observable<User> {
-    localStorage.setItem('token', token);
-    this.trustedToken = token;
+    const normalizedToken = this.normalizeToken(token);
+    if (!normalizedToken || !this.isTokenStructurallyValid(normalizedToken)) {
+      return throwError(() => new Error('Token JWT invalido en autenticacion OAuth.'));
+    }
 
-    const payload = this.decodeJwtPayload(token);
+    localStorage.setItem('token', normalizedToken);
+    this.trustedToken = normalizedToken;
+
+    const payload = this.decodeJwtPayload(normalizedToken);
     const oauthUser = response.user;
-    const userId = oauthUser?.id ?? (payload['id'] as string);
     const oauthRoles = (response.roles ?? []).map((roleName) => this.mapRole(roleName));
 
-    return this.loadRolesAndPermissionsByUserId(userId).pipe(
-      catchError((error: unknown) => {
-        // Algunos usuarios OAuth nuevos pueden no tener permiso inicial para consultar
-        // /user-role/user/{id}. En ese caso, se mantiene la sesión usando roles del login OAuth.
-        if (error instanceof HttpErrorResponse && error.status === 401) {
-          return of({ roles: [] as UserRole[], permissions: [] as UserPermission[] });
-        }
-        return throwError(() => error);
-      }),
-      map(({ roles, permissions }) => {
-        const finalRoles = oauthRoles.length > 0 ? oauthRoles : roles;
+    return this.loadCurrentUserContext({
+      id: oauthUser?.id ?? (payload['id'] as string),
+      name: oauthUser?.name ?? (payload['name'] as string),
+      email: oauthUser?.email ?? (payload['email'] as string),
+      authProvider: oauthUser?.authProvider ?? null,
+      rolesFallback: oauthRoles
+    });
+  }
+
+  private loadCurrentUserContext(fallback: {
+    id: string;
+    name: string;
+    email: string;
+    authProvider?: string | null;
+    rolesFallback: UserRole[];
+  }): Observable<User> {
+    return this.http.get<BackendCurrentUserContext>(`${this.API}/security/me`).pipe(
+      map((ctx) => {
+        const backendRoles = (ctx.roles ?? []).map((roleName) => this.mapRole(roleName));
+        const finalRoles = backendRoles.length > 0 ? backendRoles : fallback.rolesFallback;
+        const permissions: UserPermission[] = (ctx.permissions ?? [])
+          .map((p) => ({
+            url: String(p.url ?? '').trim(),
+            method: String(p.method ?? '')
+              .trim()
+              .toUpperCase()
+          }))
+          .filter((p) => !!p.url && !!p.method);
+
         const user: User = {
-          id: userId,
-          name: oauthUser?.name ?? (payload['name'] as string),
-          email: oauthUser?.email ?? (payload['email'] as string),
+          id: ctx.user?.id ?? fallback.id,
+          name: ctx.user?.name ?? fallback.name,
+          email: ctx.user?.email ?? fallback.email,
+          authProvider: ctx.user?.authProvider ?? fallback.authProvider ?? null,
           roles: finalRoles.length > 0 ? finalRoles : [UserRole.CIUDADANO],
           activeRole: finalRoles.length > 0 ? finalRoles[0] : UserRole.CIUDADANO,
           permissions
@@ -523,38 +597,58 @@ export class AuthService {
         this.currentUserSubject.next(user);
         this.activeRole.set(user.activeRole);
         return user;
+      }),
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          const user: User = {
+            id: fallback.id,
+            name: fallback.name,
+            email: fallback.email,
+            authProvider: fallback.authProvider ?? null,
+            roles: fallback.rolesFallback.length > 0 ? fallback.rolesFallback : [UserRole.CIUDADANO],
+            activeRole: fallback.rolesFallback.length > 0 ? fallback.rolesFallback[0] : UserRole.CIUDADANO,
+            permissions: []
+          };
+
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          localStorage.setItem('activeRole', user.activeRole);
+          this.currentUserSubject.next(user);
+          this.activeRole.set(user.activeRole);
+          return of(user);
+        }
+        return throwError(() => error);
       })
     );
   }
 
-  private loadRolesAndPermissionsByUserId(userId: string): Observable<{ roles: UserRole[]; permissions: UserPermission[] }> {
-    const allowLocal401Handling = new HttpContext().set(SKIP_AUTH_401_REDIRECT, true);
+  private normalizePathForPermission(path: string): string {
+    const trimmed = String(path ?? '').trim();
+    if (!trimmed) return '';
 
-    return this.http.get<BackendUserRole[]>(`${this.API}/user-role/user/${userId}`, {
-      context: allowLocal401Handling
-    }).pipe(
-      switchMap((userRoles) => {
-        const roles = userRoles.map((ur) => this.mapRole(ur.role?.name));
-        const permObs = userRoles.length > 0
-          ? forkJoin(userRoles.map((ur) => this.http.get<BackendRolePermission[]>(`${this.API}/role-permission/role/${ur.role.id}`)))
-          : of([] as BackendRolePermission[][]);
+    const withSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return withSlash.length > 1 ? withSlash.replace(/\/+$/, '') : withSlash;
+  }
 
-        return permObs.pipe(
-          map((permResults) => {
-            const permissions: UserPermission[] = (permResults as BackendRolePermission[][])
-              .flat()
-              .map((rp) => ({ url: rp.permission?.url, method: rp.permission?.method }))
-              .filter((p) => !!p.url && !!p.method);
+  private matchesPermissionPath(patternPath: string, targetPath: string): boolean {
+    if (!patternPath.includes('?')) {
+      return false;
+    }
 
-            return { roles, permissions };
-          })
-        );
-      })
-    );
+    const escaped = patternPath.replace(/[.*+^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^${escaped.replace(/\?/g, '[^/]+')}$`);
+    return regex.test(targetPath);
   }
 
   private extractBackendToken(response: GoogleSyncResponse): string | null {
-    return response.token ?? response.accessToken ?? response.jwt ?? response.data?.token ?? response.data?.accessToken ?? response.data?.jwt ?? null;
+    return (
+      response.token ??
+      response.accessToken ??
+      response.jwt ??
+      response.data?.token ??
+      response.data?.accessToken ??
+      response.data?.jwt ??
+      null
+    );
   }
 
   private loginWithBackendPassword(email: string, password: string, recaptchaToken?: string): Observable<LoginResult> {
@@ -624,9 +718,9 @@ export class AuthService {
     const map: Record<string, UserRole> = {
       ADMINISTRADOR_SISTEMA: UserRole.ADMIN_SISTEMA,
       ADMINISTRADOR_EMPRESA: UserRole.ADMIN_EMPRESA,
-      SUPERVISOR:            UserRole.SUPERVISOR,
-      CONDUCTOR:             UserRole.CONDUCTOR,
-      CIUDADANO:             UserRole.CIUDADANO
+      SUPERVISOR: UserRole.SUPERVISOR,
+      CONDUCTOR: UserRole.CONDUCTOR,
+      CIUDADANO: UserRole.CIUDADANO
     };
     return map[backendName] ?? (backendName as UserRole);
   }

@@ -8,11 +8,10 @@ import { SKIP_AUTH_401_REDIRECT } from './auth-context.tokens';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const token = localStorage.getItem('token');
+  const rawToken = localStorage.getItem('token');
+  const token = rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : null;
 
-  const requestWithAuth = token
-    ? req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })
-    : req;
+  const requestWithAuth = token ? req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) }) : req;
 
   return next(requestWithAuth).pipe(
     catchError((error: unknown) => {

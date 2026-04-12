@@ -15,13 +15,7 @@ export const menus: Navigation[] = [
         classes: 'nav-item',
         url: '/dashboard',
         icon: '#custom-home',
-        allowedRoles: [
-          UserRole.ADMIN_SISTEMA,
-          UserRole.ADMIN_EMPRESA,
-          UserRole.SUPERVISOR,
-          UserRole.CONDUCTOR,
-          UserRole.CIUDADANO
-        ]
+        allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA, UserRole.SUPERVISOR, UserRole.CONDUCTOR, UserRole.CIUDADANO]
       },
       {
         id: 'chat',
@@ -49,36 +43,6 @@ export const menus: Navigation[] = [
         url: '/ticket',
         icon: '#custom-credit-card',
         allowedRoles: [UserRole.CIUDADANO]
-      }
-    ]
-  },
-  {
-    id: 'auth',
-    title: 'Autenticación',
-    type: 'group',
-    icon: 'icon-navigation',
-    children: [
-      {
-        id: 'Login',
-        title: 'Login',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/auth/login',
-        icon: '#custom-shield',
-        target: true,
-        breadcrumbs: false,
-        allowedRoles: [] // Solo visible sin login
-      },
-      {
-        id: 'register',
-        title: 'Registrarse',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/auth/register',
-        icon: '#custom-password-check',
-        target: true,
-        breadcrumbs: false,
-        allowedRoles: [] // Solo visible sin login (CIUDADANO para nuevos registros)
       }
     ]
   },

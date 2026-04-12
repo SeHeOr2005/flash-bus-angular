@@ -44,7 +44,7 @@
     </div>
 
     <table mat-table [dataSource]="roles()" class="roles-table w-100"
-           *ngIf="!loading() && !errorMessage() && roles().length > 0">
+      *ngIf="!loading() && !errorMessage() && roles().length > 0">
 
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>Rol</th>
@@ -66,10 +66,14 @@
       <ng-container matColumnDef="permissions">
         <th mat-header-cell *matHeaderCellDef>Permisos</th>
         <td mat-cell *matCellDef="let role">
-          <span class="perm-badge" [class.perm-badge-empty]="getPermCount(role.id) === 0">
+          <span class="perm-badge" [class.perm-badge-empty]="getPermCount(role.id) === 0"
+            *ngIf="canReadRolePermissions(); else noPermCount">
             <mat-icon class="badge-icon">vpn_key</mat-icon>
             {{ getPermCount(role.id) }} permiso(s)
           </span>
+          <ng-template #noPermCount>
+            <span class="description-text">Sin acceso</span>
+          </ng-template>
         </td>
       </ng-container>
 
@@ -78,9 +82,9 @@
         <td mat-cell *matCellDef="let role">
           <div class="actions-row">
             <ng-container *appHasPermission="[
-              { url: '/role-permission', method: 'GET' },
-              { url: '/role-permission', method: 'POST' },
-              { url: '/role-permission', method: 'DELETE' }]">
+              { url: '/role-permission/role/?', method: 'GET' },
+              { url: '/role-permission/role/?/permission/?', method: 'POST' },
+              { url: '/role-permission/?', method: 'DELETE' }]">
               <button mat-icon-button color="primary" matTooltip="Gestionar permisos" (click)="openPermissions(role)">
                 <mat-icon>vpn_key</mat-icon>
               </button>

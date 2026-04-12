@@ -22,13 +22,22 @@ import { BackendRole } from 'src/app/@theme/services/user.service';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 import { UserRole } from 'src/app/@theme/types/roles';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 // ── Dialog: Crear / Editar Rol ──────────────────────────────────────────────
 @Component({
   selector: 'app-role-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-            MatFormFieldModule, MatInputModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],
   template: `
     <h2 mat-dialog-title class="dialog-title">
       <mat-icon>{{ data ? 'edit' : 'add_circle' }}</mat-icon>
@@ -60,14 +69,32 @@ import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`.dialog-title { display:flex;align-items:center;gap:8px; } .form-content{padding-top:8px;min-width:360px;} .w-100{width:100%;} .m-b-12{margin-bottom:12px;}`]
+  styles: [
+    `
+      .dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .form-content {
+        padding-top: 8px;
+        min-width: 360px;
+      }
+      .w-100 {
+        width: 100%;
+      }
+      .m-b-12 {
+        margin-bottom: 12px;
+      }
+    `
+  ]
 })
 export class RoleFormDialogComponent {
   private fb = inject(FormBuilder);
   saving = signal(false);
 
   form = this.fb.group({
-    name:        [this.data?.name ?? '', [Validators.required, Validators.minLength(3)]],
+    name: [this.data?.name ?? '', [Validators.required, Validators.minLength(3)]],
     description: [this.data?.description ?? '', Validators.required]
   });
 
@@ -86,9 +113,20 @@ export class RoleFormDialogComponent {
 @Component({
   selector: 'app-role-permissions-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-            MatFormFieldModule, MatSelectModule, MatIconModule, MatChipsModule,
-            MatProgressSpinnerModule, MatTooltipModule, MatDividerModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatIconModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatDividerModule
+  ],
   template: `
     <h2 mat-dialog-title class="dialog-title">
       <mat-icon>security</mat-icon>
@@ -96,7 +134,6 @@ export class RoleFormDialogComponent {
     </h2>
 
     <mat-dialog-content class="perm-content">
-
       <!-- Permisos asignados -->
       <p class="section-label">Permisos asignados ({{ assigned().length }})</p>
 
@@ -139,9 +176,7 @@ export class RoleFormDialogComponent {
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <button mat-flat-button color="primary"
-                  [disabled]="!selectedPermissionId || adding()"
-                  (click)="addPermission()">
+          <button mat-flat-button color="primary" [disabled]="!selectedPermissionId || adding()" (click)="addPermission()">
             <mat-spinner *ngIf="adding()" diameter="18"></mat-spinner>
             <mat-icon *ngIf="!adding()">add</mat-icon>
           </button>
@@ -156,46 +191,142 @@ export class RoleFormDialogComponent {
       <button mat-button [mat-dialog-close]="changed">Cerrar</button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .dialog-title   { display:flex;align-items:center;gap:8px; }
-    .perm-content   { min-width:480px;max-height:500px;padding-top:8px; }
-    .section-label  { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#888;margin:4px 0 10px; }
-    .center-spin    { display:flex;justify-content:center;padding:12px 0; }
-    .empty-msg      { display:flex;align-items:center;gap:6px;color:#aaa;font-size:13px;padding:8px 0; }
-    .chips-wrap     { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px; }
-    .divider        { margin:14px 0; }
-    .add-row        { display:flex;gap:8px;align-items:center; }
-    .sel-field      { flex:1; }
-    .model-tag      { font-size:11px;color:#aaa;margin-left:4px; }
-    .method-badge   { font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:6px; }
-    .perm-chip      { display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 10px;
-                      border-radius:20px;cursor:pointer;user-select:none; }
-    .perm-chip:hover{ opacity:.8; }
-    .perm-chip.chip-readonly { cursor:default; }
-    .perm-chip.chip-readonly:hover { opacity:1; }
-    .chip-x         { font-size:14px;width:14px;height:14px; }
-    .readonly-msg   { display:flex;align-items:center;gap:6px;font-size:12px;color:#999;margin-top:4px; }
-    .readonly-msg mat-icon { font-size:16px;width:16px;height:16px; }
-    .method-get     { background:#e3f2fd;color:#1565c0; }
-    .method-post    { background:#e8f5e9;color:#2e7d32; }
-    .method-put     { background:#fff3e0;color:#e65100; }
-    .method-delete  { background:#fce4ec;color:#c62828; }
-  `]
+  styles: [
+    `
+      .dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .perm-content {
+        min-width: 480px;
+        max-height: 500px;
+        padding-top: 8px;
+      }
+      .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #888;
+        margin: 4px 0 10px;
+      }
+      .center-spin {
+        display: flex;
+        justify-content: center;
+        padding: 12px 0;
+      }
+      .empty-msg {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #aaa;
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      .chips-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .divider {
+        margin: 14px 0;
+      }
+      .add-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .sel-field {
+        flex: 1;
+      }
+      .model-tag {
+        font-size: 11px;
+        color: #aaa;
+        margin-left: 4px;
+      }
+      .method-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        margin-right: 6px;
+      }
+      .perm-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .perm-chip:hover {
+        opacity: 0.8;
+      }
+      .perm-chip.chip-readonly {
+        cursor: default;
+      }
+      .perm-chip.chip-readonly:hover {
+        opacity: 1;
+      }
+      .chip-x {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+      .readonly-msg {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+      .readonly-msg mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+      .method-get {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .method-post {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .method-put {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .method-delete {
+        background: #fce4ec;
+        color: #c62828;
+      }
+    `
+  ]
 })
 export class RolePermissionsDialogComponent implements OnInit {
-  private roleService  = inject(RoleService);
-  private authService  = inject(AuthService);
-  private snackBar     = inject(MatSnackBar);
+  private roleService = inject(RoleService);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
-  assigned             = signal<BackendRolePermission[]>([]);
-  allPerms             = signal<BackendPermission[]>([]);
-  loadingAssigned      = signal(true);
-  adding               = signal(false);
+  assigned = signal<BackendRolePermission[]>([]);
+  allPerms = signal<BackendPermission[]>([]);
+  loadingAssigned = signal(true);
+  adding = signal(false);
   selectedPermissionId = '';
-  changed              = false;
+  changed = false;
 
-  canAssign(): boolean { return this.authService.hasPermission('/role-permission', 'POST')   || this.authService.hasRole(UserRole.ADMIN_SISTEMA); }
-  canRevoke(): boolean { return this.authService.hasPermission('/role-permission', 'DELETE') || this.authService.hasRole(UserRole.ADMIN_SISTEMA); }
+  canAssign(): boolean {
+    return this.authService.hasPermission('/role-permission', 'POST') || this.authService.hasRole(UserRole.ADMIN_SISTEMA);
+  }
+  canRevoke(): boolean {
+    return this.authService.hasPermission('/role-permission', 'DELETE') || this.authService.hasRole(UserRole.ADMIN_SISTEMA);
+  }
 
   constructor(
     public dialogRef: MatDialogRef<RolePermissionsDialogComponent>,
@@ -218,8 +349,8 @@ export class RolePermissionsDialogComponent implements OnInit {
   }
 
   available(): BackendPermission[] {
-    const assignedIds = this.assigned().map(rp => rp.permission?.id);
-    return this.allPerms().filter(p => !assignedIds.includes(p.id));
+    const assignedIds = this.assigned().map((rp) => rp.permission?.id);
+    return this.allPerms().filter((p) => !assignedIds.includes(p.id));
   }
 
   addPermission(): void {
@@ -243,7 +374,7 @@ export class RolePermissionsDialogComponent implements OnInit {
   removePermission(rp: BackendRolePermission): void {
     this.roleService.removePermissionFromRole(rp.id).subscribe({
       next: () => {
-        this.assigned.update(list => list.filter(r => r.id !== rp.id));
+        this.assigned.update((list) => list.filter((r) => r.id !== rp.id));
         this.changed = true;
         this.snackBar.open('Permiso removido ✓', 'Cerrar', { duration: 2500, panelClass: ['snack-success'] });
       },
@@ -252,7 +383,7 @@ export class RolePermissionsDialogComponent implements OnInit {
   }
 
   methodClass(method: string): string {
-    return { GET:'method-get', POST:'method-post', PUT:'method-put', DELETE:'method-delete' }[method] ?? '';
+    return { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete' }[method] ?? '';
   }
 }
 
@@ -261,28 +392,38 @@ export class RolePermissionsDialogComponent implements OnInit {
   selector: 'app-roles',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, SharedModule,
-    MatTableModule, MatButtonModule, MatIconModule, MatInputModule,
-    MatFormFieldModule, MatChipsModule, MatProgressSpinnerModule,
-    MatSnackBarModule, MatTooltipModule, MatDialogModule, MatBadgeModule,
+    CommonModule,
+    FormsModule,
+    SharedModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    MatDialogModule,
+    MatBadgeModule,
     HasPermissionDirective
   ],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss']
 })
 export default class RolesComponent implements OnInit {
-  private roleService  = inject(RoleService);
-  private authService  = inject(AuthService);
-  private snackBar     = inject(MatSnackBar);
-  private dialog       = inject(MatDialog);
+  private roleService = inject(RoleService);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   displayedColumns = ['name', 'description', 'permissions', 'actions'];
 
-  roles            = signal<(BackendRole & { permCount: number })[]>([]);
-  allPermissions   = signal<BackendPermission[]>([]);
-  rolePermissions  = signal<Map<string, BackendRolePermission[]>>(new Map());
-  loading          = signal(false);
-  errorMessage     = signal('');
+  roles = signal<(BackendRole & { permCount: number })[]>([]);
+  allPermissions = signal<BackendPermission[]>([]);
+  rolePermissions = signal<Map<string, BackendRolePermission[]>>(new Map());
+  loading = signal(false);
+  errorMessage = signal('');
 
   ngOnInit(): void {
     this.loadAll();
@@ -293,14 +434,20 @@ export default class RolesComponent implements OnInit {
     this.errorMessage.set('');
     try {
       const roles = await lastValueFrom(this.roleService.getRoles());
-      // Cargar permisos de cada rol en paralelo
-      const permResults = await Promise.all(
-        roles.map(r => lastValueFrom(this.roleService.getRolePermissions(r.id)))
-      );
-      const map = new Map<string, BackendRolePermission[]>();
-      roles.forEach((r, i) => map.set(r.id, permResults[i]));
-      this.rolePermissions.set(map);
-      this.roles.set(roles.map(r => ({ ...r, permCount: (permResults[roles.indexOf(r)] ?? []).length })));
+
+      // Solo consultar permisos por rol cuando el usuario tenga autorización explícita.
+      if (this.canReadRolePermissions()) {
+        const permResults = await Promise.all(roles.map((r) => lastValueFrom(this.roleService.getRolePermissions(r.id))));
+
+        const map = new Map<string, BackendRolePermission[]>();
+        roles.forEach((r, i) => map.set(r.id, permResults[i]));
+        this.rolePermissions.set(map);
+        this.roles.set(roles.map((r) => ({ ...r, permCount: (map.get(r.id) ?? []).length })));
+      } else {
+        this.rolePermissions.set(new Map());
+        this.roles.set(roles.map((r) => ({ ...r, permCount: 0 })));
+      }
+
       this.loading.set(false);
     } catch {
       this.loading.set(false);
@@ -310,16 +457,22 @@ export default class RolesComponent implements OnInit {
 
   openRoleForm(role: BackendRole | null = null): void {
     const ref = this.dialog.open(RoleFormDialogComponent, { data: role, width: '440px' });
-    ref.afterClosed().subscribe(result => {
+    ref.afterClosed().subscribe((result) => {
       if (!result) return;
       if (role) {
         this.roleService.updateRole(role.id, result).subscribe({
-          next: () => { this.snackBar.open('Rol actualizado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); this.loadAll(); },
+          next: () => {
+            this.snackBar.open('Rol actualizado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+            this.loadAll();
+          },
           error: () => this.snackBar.open('Error al actualizar el rol', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
         });
       } else {
         this.roleService.createRole(result).subscribe({
-          next: () => { this.snackBar.open('Rol creado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); this.loadAll(); },
+          next: () => {
+            this.snackBar.open('Rol creado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+            this.loadAll();
+          },
           error: () => this.snackBar.open('Error al crear el rol', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
         });
       }
@@ -328,7 +481,9 @@ export default class RolesComponent implements OnInit {
 
   openPermissions(role: BackendRole): void {
     const ref = this.dialog.open(RolePermissionsDialogComponent, { data: { role }, width: '560px', disableClose: false });
-    ref.afterClosed().subscribe(changed => { if (changed) this.loadAll(); });
+    ref.afterClosed().subscribe((changed) => {
+      if (changed) this.loadAll();
+    });
   }
 
   deleteRole(role: BackendRole & { permCount: number }): void {
@@ -336,17 +491,39 @@ export default class RolesComponent implements OnInit {
       this.snackBar.open('Primero remueve todos los permisos del rol', 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
       return;
     }
-    if (!confirm(`¿Eliminar el rol "${role.name}"? Esta acción no se puede deshacer.`)) return;
-    this.roleService.deleteRole(role.id).subscribe({
-      next: () => { this.roles.update(l => l.filter(r => r.id !== role.id)); this.snackBar.open('Rol eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] }); },
-      error: (err) => {
-        const msg = err.status === 400 ? 'No se puede eliminar: hay usuarios con este rol asignado' : 'Error al eliminar el rol';
-        this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
+
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      width: '440px',
+      data: {
+        title: 'Eliminar rol',
+        message: `¿Eliminar el rol "${role.name}"? Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'warn'
       }
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.roleService.deleteRole(role.id).subscribe({
+        next: () => {
+          this.roles.update((l) => l.filter((r) => r.id !== role.id));
+          this.snackBar.open('Rol eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: (err) => {
+          const msg = err.status === 400 ? 'No se puede eliminar: hay usuarios con este rol asignado' : 'Error al eliminar el rol';
+          this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snack-error'] });
+        }
+      });
     });
   }
 
   getPermCount(roleId: string): number {
     return this.rolePermissions().get(roleId)?.length ?? 0;
+  }
+
+  canReadRolePermissions(): boolean {
+    return this.authService.hasPermission('/role-permission/role/?', 'GET') || this.authService.hasRole(UserRole.ADMIN_SISTEMA);
   }
 }

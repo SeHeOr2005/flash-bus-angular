@@ -11,13 +11,15 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged, Subject, lastValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { UserService, BackendUser, BackendRole, BackendUserRole } from 'src/app/@theme/services/user.service';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 export interface UserRow extends BackendUser {
   roles: BackendUserRole[];
@@ -48,9 +50,10 @@ export interface UserRow extends BackendUser {
   styleUrls: ['./users.component.scss']
 })
 export default class UsersComponent implements OnInit {
-  private userService   = inject(UserService);
-  private authService   = inject(AuthService);
-  private snackBar      = inject(MatSnackBar);
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   displayedColumns = ['name', 'email', 'status', 'roles', 'actions'];
 
@@ -86,11 +89,24 @@ export default class UsersComponent implements OnInit {
     this.users.set([]);
 
     try {
-      const [users, allUserRoles] = await Promise.all([
-        lastValueFrom(users$),
-        lastValueFrom(this.userService.getAllUserRoles())
-      ]);
-      this.mapUsers(users as BackendUser[], allUserRoles as BackendUserRole[]);
+      const users = (await lastValueFrom(users$)) as BackendUser[];
+      let allUserRoles: BackendUserRole[] = [];
+
+      try {
+        allUserRoles = (await lastValueFrom(this.userService.getAllUserRoles())) as BackendUserRole[];
+      } catch (rolesError) {
+        const status = (rolesError as HttpErrorResponse)?.status;
+        if (status !== 401 && status !== 403) {
+          throw rolesError;
+        }
+
+        this.snackBar.open('Se cargaron usuarios, pero no fue posible consultar el detalle de roles.', 'Cerrar', {
+          duration: 4500,
+          panelClass: ['snack-warn']
+        });
+      }
+
+      this.mapUsers(users, allUserRoles);
     } catch (err) {
       this.loading.set(false);
       this.handleError(err, action);
@@ -109,7 +125,7 @@ export default class UsersComponent implements OnInit {
     const messages: Record<string, string> = {
       'Sin permisos': `Tu usuario no tiene permisos para ${action}.`,
       'Sin conexión': `No hay conexión con el servidor. Verifica que el backend esté corriendo en http://localhost:8080`,
-      'Error': `Error inesperado al ${action}. Código: ${(err as any).status}`
+      Error: `Error inesperado al ${action}. Código: ${(err as any).status}`
     };
 
     this.snackBar.open(messages[this.errorMessage()], 'Cerrar', {
@@ -151,13 +167,27 @@ export default class UsersComponent implements OnInit {
   }
 
   deleteUser(user: UserRow): void {
-    if (!confirm(`¿Deseas eliminar al usuario ${user.name}?`)) return;
-    this.userService.deleteUser(user.id).subscribe({
-      next: () => {
-        this.users.update((list) => list.filter((u) => u.id !== user.id));
-        this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
-      },
-      error: () => this.snackBar.open('Error al eliminar el usuario', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      data: {
+        title: 'Eliminar usuario',
+        message: `¿Deseas eliminar al usuario ${user.name}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'warn'
+      }
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.userService.deleteUser(user.id).subscribe({
+        next: () => {
+          this.users.update((list) => list.filter((u) => u.id !== user.id));
+          this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: () => this.snackBar.open('Error al eliminar el usuario', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      });
     });
   }
 
@@ -167,9 +197,7 @@ export default class UsersComponent implements OnInit {
       next: () => {
         this.snackBar.open('Rol asignado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
         this.userService.getUserRoles(user.id).subscribe((roles) => {
-          this.users.update((list) =>
-            list.map((u) => (u.id === user.id ? { ...u, roles } : u))
-          );
+          this.users.update((list) => list.map((u) => (u.id === user.id ? { ...u, roles } : u)));
         });
       },
       error: () => this.snackBar.open('Error al asignar el rol', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
@@ -179,11 +207,7 @@ export default class UsersComponent implements OnInit {
   removeRole(user: UserRow, userRoleId: string): void {
     this.userService.removeRole(userRoleId).subscribe({
       next: () => {
-        this.users.update((list) =>
-          list.map((u) =>
-            u.id === user.id ? { ...u, roles: u.roles.filter((r) => r.id !== userRoleId) } : u
-          )
-        );
+        this.users.update((list) => list.map((u) => (u.id === user.id ? { ...u, roles: u.roles.filter((r) => r.id !== userRoleId) } : u)));
         this.snackBar.open('Rol removido correctamente', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
       },
       error: () => this.snackBar.open('Error al remover el rol', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
@@ -213,8 +237,7 @@ export default class UsersComponent implements OnInit {
   }
 
   canRemoveRole(): boolean {
-    return this.authService.hasPermission('/user-role', 'DELETE') ||
-           this.authService.hasRole('ADMIN_SISTEMA' as any);
+    return this.authService.hasPermission('/user-role', 'DELETE') || this.authService.hasRole('ADMIN_SISTEMA' as any);
   }
 
   getRolesNotAssigned(user: UserRow): BackendRole[] {

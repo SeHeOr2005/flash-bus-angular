@@ -5,21 +5,21 @@
 export enum UserRole {
   ADMIN_SISTEMA = 'ADMIN_SISTEMA',
   ADMIN_EMPRESA = 'ADMIN_EMPRESA',
-  SUPERVISOR    = 'SUPERVISOR',
-  CONDUCTOR     = 'CONDUCTOR',
-  CIUDADANO     = 'CIUDADANO'
+  SUPERVISOR = 'SUPERVISOR',
+  CONDUCTOR = 'CONDUCTOR',
+  CIUDADANO = 'CIUDADANO'
 }
 
 /** Labels amigables para roles predefinidos */
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN_SISTEMA:          'Administrador Sistema',
-  ADMIN_EMPRESA:          'Administrador Empresa',
-  SUPERVISOR:             'Supervisor',
-  CONDUCTOR:              'Conductor',
-  CIUDADANO:              'Ciudadano',
+  ADMIN_SISTEMA: 'Administrador Sistema',
+  ADMIN_EMPRESA: 'Administrador Empresa',
+  SUPERVISOR: 'Supervisor',
+  CONDUCTOR: 'Conductor',
+  CIUDADANO: 'Ciudadano',
   // aliases del backend
-  ADMINISTRADOR_SISTEMA:  'Administrador Sistema',
-  ADMINISTRADOR_EMPRESA:  'Administrador Empresa'
+  ADMINISTRADOR_SISTEMA: 'Administrador Sistema',
+  ADMINISTRADOR_EMPRESA: 'Administrador Empresa'
 };
 
 /**
@@ -28,8 +28,13 @@ const ROLE_LABELS: Record<string, string> = {
  */
 export function getRoleDisplayLabel(role: string): string {
   if (!role) return 'Sin rol';
-  return ROLE_LABELS[role] ?? role.replace(/_/g, ' ').toLowerCase()
-    .replace(/\b\w/g, c => c.toUpperCase());
+  return (
+    ROLE_LABELS[role] ??
+    role
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 }
 
 /** Permiso individual (endpoint protegido) */
@@ -43,6 +48,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  authProvider?: string | null;
   roles: UserRole[];
   activeRole: UserRole;
   permissions: UserPermission[];

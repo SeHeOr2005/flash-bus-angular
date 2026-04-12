@@ -63,6 +63,13 @@ export default class LoginComponent {
       return;
     }
 
+    const email = (this.email.value ?? '').trim();
+    if (!email) {
+      this.errorMessage = 'Debes ingresar un correo electrónico';
+      this.cdr.markForCheck();
+      return;
+    }
+
     if (environment.recaptcha.enabled && !environment.recaptcha.siteKey) {
       this.errorMessage = 'reCAPTCHA no configurado. Contacta al administrador.';
       this.cdr.markForCheck();
@@ -73,38 +80,34 @@ export default class LoginComponent {
     this.errorMessage = '';
     this.cdr.markForCheck();
 
-    from(this.getRecaptchaEnterpriseToken()).pipe(
-      switchMap((recaptchaToken) => this.authService.login(this.emailValue, this.password, recaptchaToken))
-    ).subscribe({
-      next: (result) => {
-        this.loading = false;
-        this.cdr.markForCheck();
+    from(this.getRecaptchaEnterpriseToken())
+      .pipe(switchMap((recaptchaToken) => this.authService.login(email, this.password, recaptchaToken)))
+      .subscribe({
+        next: (result) => {
+          this.loading = false;
+          this.cdr.markForCheck();
 
-        if (this.isTwoFactorChallenge(result)) {
-          this.router.navigate(['/auth/two-factor']);
-          return;
-        }
+          if (this.isTwoFactorChallenge(result)) {
+            this.router.navigate(['/auth/two-factor']);
+            return;
+          }
 
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error: unknown) => {
-        if (error instanceof HttpErrorResponse && error.status === 403) {
-          this.errorMessage = 'No se pudo validar reCAPTCHA. Intenta nuevamente.';
-        } else {
-          this.errorMessage = 'Correo o contraseña incorrectos';
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error: unknown) => {
+          if (error instanceof HttpErrorResponse && error.status === 403) {
+            this.errorMessage = 'No se pudo validar reCAPTCHA. Intenta nuevamente.';
+          } else {
+            this.errorMessage = 'Correo o contraseña incorrectos';
+          }
+          this.loading = false;
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
 
   private isTwoFactorChallenge(result: unknown): result is TwoFactorChallenge {
-    return Boolean(
-      result
-      && (result as TwoFactorChallenge).requires2fa
-      && (result as TwoFactorChallenge).challengeToken
-    );
+    return Boolean(result && (result as TwoFactorChallenge).requires2fa && (result as TwoFactorChallenge).challengeToken);
   }
 
   private async getRecaptchaEnterpriseToken(): Promise<string> {
@@ -121,7 +124,8 @@ export default class LoginComponent {
       }
 
       window.grecaptcha.enterprise.ready(() => {
-        window.grecaptcha?.enterprise.execute(environment.recaptcha.siteKey, { action: environment.recaptcha.action })
+        window.grecaptcha?.enterprise
+          .execute(environment.recaptcha.siteKey, { action: environment.recaptcha.action })
           .then(resolve)
           .catch(reject);
       });
@@ -172,11 +176,12 @@ export default class LoginComponent {
     this.errorMessage = '';
     this.cdr.markForCheck();
 
-    const request$: Observable<User> = provider === 'microsoft'
-      ? this.authService.loginWithMicrosoft()
-      : provider === 'github'
-        ? this.authService.loginWithGithub()
-        : this.authService.loginWithGoogle();
+    const request$: Observable<User> =
+      provider === 'microsoft'
+        ? this.authService.loginWithMicrosoft()
+        : provider === 'github'
+          ? this.authService.loginWithGithub()
+          : this.authService.loginWithGoogle();
 
     request$.subscribe({
       next: () => {
@@ -193,21 +198,25 @@ export default class LoginComponent {
   }
 
   private getSocialAuthErrorMessage(error: unknown, provider: string): string {
-    const providerLabel = provider === 'microsoft'
-      ? 'Microsoft'
-      : provider === 'github'
-        ? 'GitHub'
-        : 'Google';
+    const providerLabel = provider === 'microsoft' ? 'Microsoft' : provider === 'github' ? 'GitHub' : 'Google';
     const firebaseCode = (error as { code?: string } | null)?.code;
-    if (firebaseCode === 'auth/popup-closed-by-user') return `Cerraste la ventana de ${providerLabel} antes de completar el inicio de sesión.`;
-    if (firebaseCode === 'auth/popup-blocked') return `El navegador bloqueó la ventana emergente de ${providerLabel}. Habilita popups e intenta de nuevo.`;
-    if (firebaseCode === 'auth/cancelled-popup-request') return `Se canceló el flujo de ${providerLabel} porque hay otra ventana emergente abierta.`;
-    if (firebaseCode === 'auth/account-exists-with-different-credential') return 'Ya existe una cuenta con ese correo y un proveedor distinto.';
+    if (firebaseCode === 'auth/popup-closed-by-user')
+      return `Cerraste la ventana de ${providerLabel} antes de completar el inicio de sesión.`;
+    if (firebaseCode === 'auth/popup-blocked')
+      return `El navegador bloqueó la ventana emergente de ${providerLabel}. Habilita popups e intenta de nuevo.`;
+    if (firebaseCode === 'auth/cancelled-popup-request')
+      return `Se canceló el flujo de ${providerLabel} porque hay otra ventana emergente abierta.`;
+    if (firebaseCode === 'auth/account-exists-with-different-credential')
+      return 'Ya existe una cuenta con ese correo y un proveedor distinto.';
 
     if (error instanceof HttpErrorResponse) {
       const backendError = (error.error as { error?: string; detail?: string } | null)?.error;
       const backendDetail = (error.error as { error?: string; detail?: string } | null)?.detail;
-      return backendDetail ?? backendError ?? `El backend no pudo autenticar con ${providerLabel}. Revisa configuración OAuth/Firebase del servidor.`;
+      return (
+        backendDetail ??
+        backendError ??
+        `El backend no pudo autenticar con ${providerLabel}. Revisa configuración OAuth/Firebase del servidor.`
+      );
     }
 
     const fallback = (error as { message?: string } | null)?.message;
@@ -216,7 +225,12 @@ export default class LoginComponent {
 
   loginType = [
     { image: 'assets/images/authentication/github.svg', alt: 'github', title: 'Iniciar sesión con GitHub', shortTitle: 'GitHub' },
-    { image: 'assets/images/authentication/microsoft.svg', alt: 'microsoft', title: 'Iniciar sesión con Microsoft', shortTitle: 'Microsoft' },
+    {
+      image: 'assets/images/authentication/microsoft.svg',
+      alt: 'microsoft',
+      title: 'Iniciar sesión con Microsoft',
+      shortTitle: 'Microsoft'
+    },
     { image: 'assets/images/authentication/google.svg', alt: 'google', title: 'Iniciar sesión con Google', shortTitle: 'Google' }
   ];
 }

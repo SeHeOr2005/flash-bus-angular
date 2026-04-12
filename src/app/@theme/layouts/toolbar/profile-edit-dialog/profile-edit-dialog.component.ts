@@ -11,11 +11,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from 'src/app/@theme/services/auth.service';
 
-/** Valida que si se ingresó nueva contraseña, tenga al menos 6 caracteres */
-function newPasswordValidator(control: AbstractControl): ValidationErrors | null {
-  const value = control.value as string;
-  if (!value || value.trim() === '') return null; // opcional, no hay error si está vacío
-  return value.length >= 6 ? null : { minlength: { requiredLength: 6, actualLength: value.length } };
+function passwordValidator(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '').trim();
+  if (!value) return null;
+
+  const valid = value.length >= 8 && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+
+  return valid ? null : { passwordPolicy: true };
 }
 
 @Component({
@@ -40,9 +42,7 @@ function newPasswordValidator(control: AbstractControl): ValidationErrors | null
     </h2>
 
     <mat-dialog-content class="dialog-content">
-      <form [formGroup]="form">
-
-        <!-- ── Datos personales ── -->
+      <form [formGroup]="form" class="profile-form">
         <p class="section-label">Información personal</p>
 
         <mat-form-field appearance="outline" class="w-100 m-b-10">
@@ -54,77 +54,126 @@ function newPasswordValidator(control: AbstractControl): ValidationErrors | null
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Correo electrónico</mat-label>
+          <mat-label>Correo nuevo</mat-label>
           <mat-icon matPrefix>email</mat-icon>
           <input matInput formControlName="email" placeholder="tu@correo.com" />
+          <mat-hint *ngIf="currentUser?.authProvider && !unlinkMode()">
+            Este es el correo de la cuenta social vinculada actualmente.
+          </mat-hint>
           <mat-error *ngIf="form.get('email')?.hasError('required')">El correo es requerido</mat-error>
           <mat-error *ngIf="form.get('email')?.hasError('email')">Correo inválido</mat-error>
         </mat-form-field>
 
+        <div class="unlink-card" *ngIf="currentUser?.authProvider">
+          <div>
+            <p class="unlink-title">Cuenta vinculada</p>
+            <p class="unlink-copy">
+              Tu sesión actual viene de {{ getProviderLabel(currentUser?.authProvider) }}. Si la desvinculas, podrás entrar con correo y
+              contraseña.
+            </p>
+          </div>
+          <button mat-stroked-button color="warn" type="button" (click)="toggleUnlinkMode()" [disabled]="saving()">
+            {{ unlinkMode() ? 'Cancelar' : 'Desvincular cuenta' }}
+          </button>
+        </div>
+
         <mat-divider class="divider"></mat-divider>
 
-        <!-- ── Seguridad ── -->
-        <p class="section-label">Seguridad</p>
+        <p class="section-label">Contraseña</p>
 
-        <!-- Contraseña actual (siempre requerida) -->
-        <mat-form-field appearance="outline" class="w-100 m-b-10">
-          <mat-label>Contraseña actual</mat-label>
-          <mat-icon matPrefix>lock</mat-icon>
-          <input matInput
-                 [type]="showCurrent() ? 'text' : 'password'"
-                 formControlName="currentPassword"
-                 placeholder="Ingresa tu contraseña actual" />
-          <button mat-icon-button matSuffix type="button" (click)="showCurrent.set(!showCurrent())">
-            <mat-icon>{{ showCurrent() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          <mat-hint>Requerida para confirmar cualquier cambio</mat-hint>
-          <mat-error *ngIf="form.get('currentPassword')?.hasError('required')">La contraseña actual es requerida</mat-error>
-          <mat-error *ngIf="form.get('currentPassword')?.hasError('minlength')">Mínimo 6 caracteres</mat-error>
-        </mat-form-field>
-
-        <!-- Nueva contraseña (opcional) -->
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Nueva contraseña <span class="optional">(opcional)</span></mat-label>
-          <mat-icon matPrefix>lock_reset</mat-icon>
-          <input matInput
-                 [type]="showNew() ? 'text' : 'password'"
-                 formControlName="newPassword"
-                 placeholder="Déjala en blanco para no cambiarla" />
-          <button mat-icon-button matSuffix type="button" (click)="showNew.set(!showNew())">
-            <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <mat-label>{{ unlinkMode() ? 'Nueva contraseña' : 'Contraseña' }}</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            [placeholder]="unlinkMode() ? 'Necesaria para desvincular la cuenta' : 'Déjala en blanco para mantenerla'"
+          />
+          <button mat-icon-button matSuffix type="button" (click)="showPassword.set(!showPassword())">
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
-          <mat-hint *ngIf="!form.get('newPassword')?.value">Si no la cambias, se mantiene la actual</mat-hint>
-          <mat-error *ngIf="form.get('newPassword')?.hasError('minlength')">Mínimo 6 caracteres</mat-error>
+          <mat-hint>
+            {{ unlinkMode() ? 'La contraseña es obligatoria para desvincular la cuenta social.' : 'Opcional si no quieres cambiarla.' }}
+          </mat-hint>
+          <mat-error *ngIf="form.get('password')?.hasError('required')">La contraseña es requerida para desvincular</mat-error>
+          <mat-error *ngIf="form.get('password')?.hasError('passwordPolicy')"
+            >Debe tener 8 caracteres, una mayúscula, un número y un carácter especial</mat-error
+          >
         </mat-form-field>
-
       </form>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
       <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="save()"
-        [disabled]="form.invalid || saving()"
-      >
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="!canSubmit() || saving()">
         <mat-spinner *ngIf="saving()" diameter="18" class="btn-spinner"></mat-spinner>
-        <span *ngIf="!saving()">Guardar cambios</span>
+        <span *ngIf="!saving()">{{ unlinkMode() ? 'Desvincular y guardar' : 'Guardar cambios' }}</span>
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .dialog-title    { display: flex; align-items: center; gap: 8px; }
-    .dialog-content  { min-width: 400px; padding-top: 8px; }
-    .w-100           { width: 100%; }
-    .m-b-10          { margin-bottom: 10px; }
-    .section-label   { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase;
-                       letter-spacing: 0.5px; margin: 4px 0 12px; }
-    .divider         { margin: 16px 0 12px; }
-    .optional        { font-weight: 400; font-size: 11px; color: #999; }
-    .btn-spinner     { display: inline-block; }
-    mat-icon[matPrefix] { margin-right: 4px; font-size: 20px; }
-  `]
+  styles: [
+    `
+      .dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dialog-content {
+        min-width: 420px;
+        padding-top: 8px;
+      }
+      .profile-form {
+        display: block;
+      }
+      .w-100 {
+        width: 100%;
+      }
+      .m-b-10 {
+        margin-bottom: 10px;
+      }
+      .section-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 4px 0 12px;
+      }
+      .divider {
+        margin: 16px 0 12px;
+      }
+      .btn-spinner {
+        display: inline-block;
+      }
+      .unlink-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 14px;
+        background: #fafafa;
+        margin-top: 12px;
+      }
+      .unlink-title {
+        margin: 0 0 4px;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .unlink-copy {
+        margin: 0;
+        color: #666;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      mat-icon[matPrefix] {
+        margin-right: 4px;
+        font-size: 20px;
+      }
+    `
+  ]
 })
 export class ProfileEditDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<ProfileEditDialogComponent>);
@@ -132,36 +181,70 @@ export class ProfileEditDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
 
+  currentUser = this.authService.getCurrentUser();
   saving = signal(false);
-  showCurrent = signal(false);
-  showNew = signal(false);
+  unlinkMode = signal(false);
+  showPassword = signal(false);
 
   form = this.fb.group({
-    name:            ['', [Validators.required, Validators.minLength(2)]],
-    email:           ['', [Validators.required, Validators.email]],
-    currentPassword: ['', [Validators.required, Validators.minLength(6)]],
-    newPassword:     ['', [newPasswordValidator]]   // opcional
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [passwordValidator]]
   });
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.form.patchValue({ name: user.name, email: user.email });
+    if (this.currentUser) {
+      this.form.patchValue({
+        name: this.currentUser.name,
+        email: this.currentUser.email
+      });
     }
   }
 
-  save(): void {
-    if (this.form.invalid) return;
-    const { name, email, currentPassword, newPassword } = this.form.value;
+  toggleUnlinkMode(): void {
+    this.unlinkMode.update((value) => !value);
+    const passwordControl = this.form.get('password');
 
-    // Si hay nueva contraseña la usamos; si no, mandamos la actual para que el backend no explote
-    const passwordToSend = (newPassword && newPassword.trim() !== '') ? newPassword : currentPassword;
+    if (this.unlinkMode()) {
+      passwordControl?.setValidators([Validators.required, passwordValidator]);
+      if (this.currentUser?.email) {
+        this.form.patchValue({ email: this.currentUser.email });
+      }
+    } else {
+      passwordControl?.setValidators([passwordValidator]);
+      passwordControl?.setValue('');
+    }
+
+    passwordControl?.updateValueAndValidity();
+  }
+
+  canSubmit(): boolean {
+    if (!this.form.valid) {
+      return false;
+    }
+
+    if (this.unlinkMode()) {
+      const password = String(this.form.get('password')?.value ?? '').trim();
+      return password.length > 0;
+    }
+
+    return true;
+  }
+
+  save(): void {
+    if (!this.canSubmit()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { name, email, password } = this.form.value;
+    const passwordToSend = String(password ?? '').trim();
 
     this.saving.set(true);
-    this.authService.updateProfile(name!, email!, passwordToSend!).subscribe({
+    this.authService.updateProfile(name!, email!, passwordToSend, this.unlinkMode()).subscribe({
       next: () => {
         this.saving.set(false);
-        this.snackBar.open('Perfil actualizado correctamente ✓', 'Cerrar', {
+        this.snackBar.open(this.unlinkMode() ? 'Cuenta desvinculada correctamente' : 'Perfil actualizado correctamente', 'Cerrar', {
           duration: 3000,
           panelClass: ['snack-success'],
           horizontalPosition: 'center',
@@ -171,11 +254,9 @@ export class ProfileEditDialogComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        const msg = err.status === 409
-          ? 'Ese correo ya está en uso por otro usuario'
-          : err.status === 401
-          ? 'Contraseña actual incorrecta'
-          : 'Error al actualizar el perfil';
+        const backendMessage = (err.error as { error?: string } | null)?.error;
+        const msg = backendMessage ?? (err.status === 409 ? 'Revisa el correo o la contraseña ingresada' : 'Error al actualizar el perfil');
+
         this.snackBar.open(msg, 'Cerrar', {
           duration: 4000,
           panelClass: ['snack-error'],
@@ -188,5 +269,15 @@ export class ProfileEditDialogComponent implements OnInit {
 
   close(): void {
     this.dialogRef.close(false);
+  }
+
+  getProviderLabel(provider?: string | null): string {
+    const labels: Record<string, string> = {
+      'google.com': 'Google',
+      'github.com': 'GitHub',
+      'microsoft.com': 'Microsoft'
+    };
+
+    return provider ? (labels[provider] ?? provider) : 'cuenta social';
   }
 }

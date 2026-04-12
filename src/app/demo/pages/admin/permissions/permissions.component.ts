@@ -16,6 +16,7 @@ import { lastValueFrom } from 'rxjs';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { RoleService, BackendPermission } from 'src/app/@theme/services/role.service';
 import { HasPermissionDirective } from 'src/app/@theme/directives/has-permission.directive';
+import { ConfirmDialogComponent } from 'src/app/@theme/components/confirm-dialog/confirm-dialog.component';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -186,14 +187,28 @@ export default class PermissionsComponent implements OnInit {
   }
 
   deletePermission(perm: BackendPermission): void {
-    if (!confirm(`¿Eliminar el permiso "${perm.method} ${perm.url}"?`)) return;
-    this.roleService.deletePermission(perm.id).subscribe({
-      next: () => {
-        this.permissions.update(l => l.filter(p => p.id !== perm.id));
-        this.filtered.update(l => l.filter(p => p.id !== perm.id));
-        this.snackBar.open('Permiso eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
-      },
-      error: () => this.snackBar.open('Error al eliminar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      width: '440px',
+      data: {
+        title: 'Eliminar permiso',
+        message: `¿Eliminar el permiso "${perm.method} ${perm.url}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'warn'
+      }
+    });
+
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.roleService.deletePermission(perm.id).subscribe({
+        next: () => {
+          this.permissions.update(l => l.filter(p => p.id !== perm.id));
+          this.filtered.update(l => l.filter(p => p.id !== perm.id));
+          this.snackBar.open('Permiso eliminado ✓', 'Cerrar', { duration: 3000, panelClass: ['snack-success'] });
+        },
+        error: () => this.snackBar.open('Error al eliminar el permiso', 'Cerrar', { duration: 3000, panelClass: ['snack-error'] })
+      });
     });
   }
 
