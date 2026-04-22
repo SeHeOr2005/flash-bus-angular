@@ -7,7 +7,7 @@ export const environment = {
   googleAuthEndpoint: '/security/oauth/login',
   recaptcha: {
     enabled: true,
-    siteKey: '6LcSqqUsAAAAAFMKRcjte2kT0A9gUjBdsZg5DnEO',
+    siteKey: '6Le1BMQsAAAAAPhYZUibq8bk1ACAaxqPs-GAhO9D',
     action: 'login'
   },
   firebase: {
