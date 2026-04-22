@@ -7,7 +7,7 @@ import packageInfo from '../../package.json';
 export const environment = {
   appVersion: packageInfo.version,
   production: false,
-  apiUrl: 'http://localhost:8080',
+  apiUrl: 'https://proyectobuses-production.up.railway.app',
   googleAuthEndpoint: '/security/oauth/login',
   recaptcha: {
     enabled: true,
