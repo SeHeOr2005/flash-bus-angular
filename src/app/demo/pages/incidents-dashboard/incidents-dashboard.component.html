@@ -1,0 +1,68 @@
+<div class="p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-danger-light text-danger rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
+        <i class="ti ti-alert-circle"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Dashboard de Incidentes</h4>
+        <p class="text-muted mb-0">Monitorea y gestiona las novedades de la flota</p>
+      </div>
+    </div>
+  </div>
+
+  <app-card>
+    @if (cargando) {
+      <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Cargando incidentes...</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Bus (Placa)</th>
+              <th>Ruta Afectada</th>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (incidente of incidentes; track incidente._id) {
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ incidente.fecha_reporte | date:'shortDate' }}</div>
+                  <small class="text-muted">{{ incidente.fecha_reporte | date:'shortTime' }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border"><i class="ti ti-bus me-1"></i>{{ incidente.programacion_id?.bus_id?.placa || 'N/A' }}</span>
+                </td>
+                <td>{{ incidente.programacion_id?.ruta_id?.nombre || 'N/A' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getBadgeColor(incidente.tipo)">{{ incidente.tipo }}</span>
+                </td>
+                <td style="max-width: 300px;">
+                  <div class="text-truncate" [title]="incidente.descripcion">{{ incidente.descripcion }}</div>
+                </td>
+                <td>
+                  <span class="badge bg-warning text-dark">Pendiente</span>
+                </td>
+              </tr>
+            }
+            @if (incidentes.length === 0) {
+              <tr>
+                <td colspan="6" class="text-center p-4">
+                  <i class="ti ti-check text-success mb-2" style="font-size: 32px;"></i>
+                  <p class="mb-0 text-muted">No se han reportado incidentes recientemente.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-card>
+</div>

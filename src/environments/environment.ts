@@ -6,8 +6,9 @@ import packageInfo from '../../package.json';
 
 export const environment = {
   appVersion: packageInfo.version,
-  production: true,
-  apiUrl: 'https://proyectobuses-production.up.railway.app',
+  production: false,
+  /** ms-security local. Para producción usa tu URL (p. ej. Railway) en environment.prod.ts */
+  apiUrl: 'http://localhost:8080',
   googleAuthEndpoint: '/security/oauth/login',
   recaptcha: {
     enabled: true,
@@ -22,6 +23,12 @@ export const environment = {
     messagingSenderId: '68134736545',
     appId: '1:68134736545:web:c84e52b800dc68cf1cd6e0',
     measurementId: 'G-Q4CG33P77W'
+  },
+  negocioUrl: 'http://localhost:3200/api',
+  epayco: {
+    publicKey: '889d6648adf8cd1de2792583fe4d8a45',
+    clientId: '1581460',
+    testMode: true
   }
 };
 

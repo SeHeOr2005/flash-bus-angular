@@ -1,160 +1,145 @@
-<div class="ticket-page">
-
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-title">
-      <div class="header-icon-wrap">
+<div class="ticket-page p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-primary-light text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
         <i class="ti ti-ticket"></i>
       </div>
       <div>
-        <h4>Mis Tiquetes</h4>
-        <p class="text-muted">Consulta tus viajes próximos e historial de viajes</p>
+        <h4 class="mb-0 fw-bold">Mis Boletos</h4>
+        <p class="text-muted mb-0">Gestiona tus viajes y visualiza tu historial</p>
       </div>
     </div>
   </div>
 
   <div class="row">
+    <!-- Formulario para simular abordaje (HU-003) -->
+    <div class="col-12 mb-4">
+      <app-card>
+        <h5 class="mb-3"><i class="ti ti-bus me-2"></i>Simular Abordaje</h5>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Programación (Bus/Ruta)</label>
+            <select class="form-select" [(ngModel)]="nuevaProgramacionId">
+              <option value="" disabled selected>Seleccione programación...</option>
+              @for (prog of programaciones; track prog._id) {
+                <option [value]="prog._id">{{ prog.ruta_id?.nombre }} - Bus: {{ prog.bus_id?.placa }} ({{ prog.fecha | date:'short' }})</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Método de Pago</label>
+            <select class="form-select" [(ngModel)]="nuevoMetodoPagoId">
+              <option value="" disabled selected>Seleccione método de pago...</option>
+              @for (mp of metodosPago; track mp._id) {
+                <option [value]="mp._id">{{ mp.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-primary w-100" (click)="abordar()" [disabled]="cargando || !nuevaProgramacionId || !nuevoMetodoPagoId">
+              <i class="ti ti-scan me-2"></i> Validar y Abordar
+            </button>
+          </div>
+        </div>
+      </app-card>
+    </div>
+
+    <!-- Pestañas de Boletos Activos y Completados -->
     <div class="col-12">
-      <mat-tab-group class="tickets-tabs">
-        <mat-tab label="Próximos Viajes">
-          @if (activeTickets.length > 0) {
-          <div class="tickets-list">
-            @for (ticket of activeTickets; track ticket.id) {
-            <div class="ticket-card active-ticket">
-              <div class="ticket-header">
-                <div class="ticket-info">
-                  <h5 class="bus-company">{{ ticket.busCompany }}</h5>
-                  <p class="booking-code">Código: <strong>{{ ticket.bookingCode }}</strong></p>
-                </div>
-                <span class="badge badge-success">
-                  <i class="ti ti-circle-check"></i> Próximo
-                </span>
+      <mat-tab-group animationDuration="0ms" class="ticket-tabs">
+        
+        <!-- Boletos Activos (HU-004) -->
+        <mat-tab label="Viajes Activos">
+          <div class="pt-4">
+            @if (cargando) {
+              <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Cargando...</p>
               </div>
-
-              <div class="ticket-route">
-                <div class="route-point">
-                  <h6 class="time">{{ ticket.departure }}</h6>
-                  <p class="location">{{ ticket.origin }}</p>
-                </div>
-                <div class="route-divider">
-                  <i class="ti ti-bus route-bus-icon"></i>
-                </div>
-                <div class="route-point">
-                  <h6 class="time">{{ ticket.arrival }}</h6>
-                  <p class="location">{{ ticket.destination }}</p>
-                </div>
+            } @else if (boletosActivos.length === 0) {
+              <div class="empty-state text-center p-5 bg-white rounded shadow-sm">
+                <i class="ti ti-ticket-off text-muted" style="font-size: 48px;"></i>
+                <h5 class="mt-3">No tienes viajes activos</h5>
+                <p class="text-muted">Aborda un bus para ver tu boleto aquí.</p>
               </div>
-
-              <div class="ticket-details">
-                <div class="detail-item">
-                  <i class="ti ti-calendar"></i>
-                  <span>{{ ticket.date }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="ti ti-user"></i>
-                  <span>{{ ticket.passenger }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="ti ti-armchair"></i>
-                  <span>Asiento {{ ticket.seat }}</span>
-                </div>
+            } @else {
+              <div class="row g-4">
+                @for (boleto of boletosActivos; track boleto._id) {
+                  <div class="col-md-6 col-xl-4">
+                    <div class="ticket-card active bg-white rounded shadow-sm border border-primary position-relative overflow-hidden">
+                      <div class="ribbon bg-primary text-white position-absolute top-0 end-0 px-3 py-1 fw-bold rounded-bottom-start">ACTIVO</div>
+                      <div class="p-4 border-bottom border-dashed">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <h5 class="mb-0 text-primary"><i class="ti ti-bus text-primary me-2"></i>{{ boleto.ruta_id?.nombre || 'Ruta Desconocida' }}</h5>
+                        </div>
+                        <div class="mb-2"><strong>Fecha:</strong> {{ boleto.fecha_compra | date:'medium' }}</div>
+                        <div class="mb-2"><strong>Precio:</strong> ${{ boleto.precio | number }}</div>
+                        <div class="mb-2"><strong>Bus Placa:</strong> {{ boleto.programacion_id?.bus_id?.placa || 'N/A' }}</div>
+                      </div>
+                      <div class="p-3 bg-light d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Muestra este boleto si es requerido</span>
+                        <button class="btn btn-danger btn-sm" (click)="descender(boleto._id)">
+                          <i class="ti ti-logout me-1"></i> Finalizar Viaje (Descender)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
-
-              <div class="qr-section">
-                <div class="qr-code">
-                  <i class="ti ti-qrcode qr-placeholder-icon"></i>
-                  <p>QR Code</p>
-                </div>
-                <p class="qr-label">{{ ticket.qrCode }}</p>
-              </div>
-
-              <div class="ticket-actions">
-                <button class="btn btn-sm btn-outline-primary" (click)="downloadTicket(ticket)">
-                  <i class="ti ti-download"></i> Descargar
-                </button>
-                <button class="btn btn-sm btn-outline-primary" (click)="shareTicket(ticket)">
-                  <i class="ti ti-share"></i> Compartir
-                </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="cancelTicket(ticket)">
-                  <i class="ti ti-x"></i> Cancelar
-                </button>
-              </div>
-            </div>
             }
           </div>
-          }
-          @if (activeTickets.length === 0) {
-          <div class="empty-state">
-            <i class="ti ti-ticket empty-icon"></i>
-            <h5>No tienes próximos viajes</h5>
-            <p>Busca rutas disponibles y reserva tu tiquete</p>
-          </div>
-          }
         </mat-tab>
 
-        <mat-tab label="Historial">
-          @if (completedTickets.length > 0) {
-          <div class="tickets-list">
-            @for (ticket of completedTickets; track ticket.id) {
-            <div class="ticket-card completed-ticket">
-              <div class="ticket-header">
-                <div class="ticket-info">
-                  <h5 class="bus-company">{{ ticket.busCompany }}</h5>
-                  <p class="booking-code">Código: <strong>{{ ticket.bookingCode }}</strong></p>
+        <!-- Historial de Viajes (HU-005) -->
+        <mat-tab label="Historial Completados">
+          <div class="pt-4 row">
+            <!-- Lista -->
+            <div class="col-md-6">
+              @if (cargando) {
+                <div class="text-center p-4">
+                  <div class="spinner-border text-primary" role="status"></div>
                 </div>
-                <span class="badge badge-secondary">
-                  <i class="ti ti-check"></i> Completado
-                </span>
-              </div>
-
-              <div class="ticket-route">
-                <div class="route-point">
-                  <h6 class="time">{{ ticket.departure }}</h6>
-                  <p class="location">{{ ticket.origin }}</p>
+              } @else if (boletosCompletados.length === 0) {
+                <div class="empty-state text-center p-5 bg-white rounded shadow-sm">
+                  <i class="ti ti-history text-muted" style="font-size: 48px;"></i>
+                  <h5 class="mt-3">Aún no hay historial</h5>
                 </div>
-                <div class="route-divider">
-                  <i class="ti ti-bus route-bus-icon"></i>
+              } @else {
+                <div class="list-group shadow-sm">
+                  @for (boleto of boletosCompletados; track boleto._id) {
+                    <button class="list-group-item list-group-item-action p-3" 
+                            [class.active]="viajeSeleccionado?._id === boleto._id"
+                            (click)="verRecorrido(boleto)">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1"><i class="ti ti-check text-success me-2"></i>{{ boleto.ruta_id?.nombre || 'Ruta' }}</h6>
+                        <small>{{ boleto.fecha_compra | date:'shortDate' }}</small>
+                      </div>
+                      <p class="mb-1 small">Precio: ${{ boleto.precio }} - Pagado con: {{ boleto.metodo_pago_id?.nombre || 'Desconocido' }}</p>
+                    </button>
+                  }
                 </div>
-                <div class="route-point">
-                  <h6 class="time">{{ ticket.arrival }}</h6>
-                  <p class="location">{{ ticket.destination }}</p>
-                </div>
-              </div>
-
-              <div class="ticket-details">
-                <div class="detail-item">
-                  <i class="ti ti-calendar"></i>
-                  <span>{{ ticket.date }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="ti ti-user"></i>
-                  <span>{{ ticket.passenger }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="ti ti-armchair"></i>
-                  <span>Asiento {{ ticket.seat }}</span>
-                </div>
-              </div>
-
-              <div class="ticket-actions">
-                <button class="btn btn-sm btn-outline-primary" (click)="downloadTicket(ticket)">
-                  <i class="ti ti-download"></i> Descargar
-                </button>
-                <button class="btn btn-sm btn-outline-primary" (click)="shareTicket(ticket)">
-                  <i class="ti ti-share"></i> Compartir
-                </button>
-              </div>
+              }
             </div>
-            }
+
+            <!-- Mapa del recorrido -->
+            <div class="col-md-6">
+              <app-card [padding]="0" style="height: 100%; min-height: 400px; position: relative;">
+                @if (viajeSeleccionado) {
+                  <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                    <h6 class="mb-0">Recorrido de Viaje</h6>
+                    <button class="btn btn-sm btn-icon btn-light" (click)="cerrarMapa()"><i class="ti ti-x"></i></button>
+                  </div>
+                  <div id="map-viaje" style="width: 100%; height: 350px;"></div>
+                } @else {
+                  <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-muted text-center" style="min-height: 400px;">
+                    <i class="ti ti-map-2 mb-3" style="font-size: 48px;"></i>
+                    <h5>Selecciona un viaje</h5>
+                    <p>Haz clic en un viaje del historial para ver el recorrido exacto que hiciste en el mapa.</p>
+                  </div>
+                }
+              </app-card>
+            </div>
           </div>
-          }
-          @if (completedTickets.length === 0) {
-          <div class="empty-state">
-            <i class="ti ti-history empty-icon"></i>
-            <h5>No hay viajes completados</h5>
-            <p>Tu historial de viajes aparecerá aquí</p>
-          </div>
-          }
         </mat-tab>
       </mat-tab-group>
     </div>

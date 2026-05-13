@@ -1,0 +1,16 @@
+.table {
+  th {
+    font-weight: 600;
+    color: var(--text-700);
+    border-bottom-width: 2px;
+  }
+  td {
+    padding: 1rem 0.75rem;
+  }
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,69 @@
+<div class="p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-primary-light text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
+        <i class="ti ti-chart-bar"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Analytics Dashboard</h4>
+        <p class="text-muted mb-0">Visualización de datos y métricas de negocio</p>
+      </div>
+    </div>
+  </div>
+
+  @if (cargando) {
+    <div class="text-center p-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">Cargando analíticas...</p>
+    </div>
+  } @else {
+    <div class="row">
+      <!-- Ingresos (HU-014) -->
+      <div class="col-md-6 mb-4">
+        <app-card [title]="'Ingresos por Mes'">
+          <div id="chart-ingresos">
+            <apx-chart
+              [series]="chartIngresos.series"
+              [chart]="chartIngresos.chart"
+              [xaxis]="chartIngresos.xaxis"
+              [colors]="chartIngresos.colors"
+              [plotOptions]="chartIngresos.plotOptions"
+              [dataLabels]="chartIngresos.dataLabels"
+            ></apx-chart>
+          </div>
+        </app-card>
+      </div>
+
+      <!-- Edades (HU-015) -->
+      <div class="col-md-6 mb-4">
+        <app-card [title]="'Distribución de Pasajeros por Edad'">
+          <div id="chart-edades">
+            <apx-chart
+              [series]="chartEdades.series"
+              [chart]="chartEdades.chart"
+              [labels]="chartEdades.labels"
+              [responsive]="chartEdades.responsive"
+              [colors]="chartEdades.colors"
+            ></apx-chart>
+          </div>
+        </app-card>
+      </div>
+
+      <!-- Incidentes (HU-016) -->
+      <div class="col-12 mb-4">
+        <app-card [title]="'Tendencia de Incidentes'">
+          <div id="chart-incidentes">
+            <apx-chart
+              [series]="chartIncidentes.series"
+              [chart]="chartIncidentes.chart"
+              [xaxis]="chartIncidentes.xaxis"
+              [stroke]="chartIncidentes.stroke"
+              [grid]="chartIncidentes.grid"
+              [colors]="chartIncidentes.colors"
+            ></apx-chart>
+          </div>
+        </app-card>
+      </div>
+    </div>
+  }
+</div>

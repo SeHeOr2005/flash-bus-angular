@@ -1,37 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
+import { ViajesService } from 'src/app/services/viajes.service';
 
-interface BusStop {
-  name: string;
-  order: number;
-}
+import * as L from 'leaflet';
 
-interface BusRoute {
-  id: number;
-  name: string;
-  code: string;
-  color: string;
-  frequency: string;
-  schedule: string;
-  stops: BusStop[];
-  price: number;
-}
-
-interface BusCompany {
-  id: number;
-  name: string;
-  logo: string;
-  description: string;
-  rating: number;
-  busCount: number;
-  routes: BusRoute[];
-}
+// Fix for leaflet icons in Angular
+const iconRetinaUrl = 'assets/marker-icon-2x.png';
+const iconUrl = 'assets/marker-icon.png';
+const shadowUrl = 'assets/marker-shadow.png';
+const iconDefault = L.icon({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
   selector: 'app-search-buses',
@@ -42,155 +34,136 @@ interface BusCompany {
     FormsModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
-    MatSelectModule
+    MatIconModule
   ],
   templateUrl: './search-buses.component.html',
   styleUrls: ['./search-buses.component.scss']
 })
-export default class SearchBusesComponent {
-  selectedCompanyId: number | null = null;
-  selectedRoute: BusRoute | null = null;
+export default class SearchBusesComponent implements OnInit, AfterViewInit, OnDestroy {
+  rutas: any[] = [];
+  rutasFiltradas: any[] = [];
+  filtroNombre: string = '';
+  
+  rutaSeleccionada: any = null;
+  nodosRuta: any[] = [];
+  
+  map: L.Map | undefined;
+  routeLayer: L.FeatureGroup | undefined;
 
-  companies: BusCompany[] = [
-    {
-      id: 1,
-      name: 'Transmanizales',
-      logo: 'assets/images/user/avatar-2.jpg',
-      description: 'Principal operador de transporte público en Manizales con más de 30 rutas urbanas.',
-      rating: 4.5,
-      busCount: 85,
-      routes: [
-        {
-          id: 101, name: 'Centro - Chipre', code: 'R-101', color: '#4680FF',
-          frequency: 'Cada 10 min', schedule: '5:00 AM - 10:00 PM', price: 2800,
-          stops: [
-            { name: 'Terminal Centro (Versalles)', order: 1 },
-            { name: 'Parque Caldas', order: 2 },
-            { name: 'Av. Santander - Cra 23', order: 3 },
-            { name: 'Cable Plaza', order: 4 },
-            { name: 'Chipre - Monumento', order: 5 }
-          ]
-        },
-        {
-          id: 102, name: 'Centro - Enea', code: 'R-102', color: '#2ca87f',
-          frequency: 'Cada 15 min', schedule: '5:30 AM - 9:30 PM', price: 2800,
-          stops: [
-            { name: 'Terminal Centro (Versalles)', order: 1 },
-            { name: 'Av. Santander', order: 2 },
-            { name: 'Mall Plaza', order: 3 },
-            { name: 'La Enea', order: 4 },
-            { name: 'Terminal de Transporte', order: 5 }
-          ]
-        },
-        {
-          id: 103, name: 'Villamaría - Centro', code: 'R-103', color: '#dc2626',
-          frequency: 'Cada 12 min', schedule: '5:00 AM - 10:00 PM', price: 2800,
-          stops: [
-            { name: 'Villamaría Centro', order: 1 },
-            { name: 'Av. Kevin Ángel', order: 2 },
-            { name: 'La Fuente', order: 3 },
-            { name: 'Plaza de Bolívar', order: 4 },
-            { name: 'Terminal Centro (Versalles)', order: 5 }
-          ]
-        },
-        {
-          id: 104, name: 'Centro - La Linda', code: 'R-104', color: '#e8a317',
-          frequency: 'Cada 20 min', schedule: '5:30 AM - 9:00 PM', price: 2800,
-          stops: [
-            { name: 'Terminal Centro (Versalles)', order: 1 },
-            { name: 'Cra 23 con Cll 65', order: 2 },
-            { name: 'Av. Paralela', order: 3 },
-            { name: 'La Linda', order: 4 }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Transportes Flash',
-      logo: 'assets/images/user/avatar-2.jpg',
-      description: 'Transporte moderno con flota renovada y servicio de alta calidad en Manizales.',
-      rating: 4.7,
-      busCount: 45,
-      routes: [
-        {
-          id: 201, name: 'Maltería - Centro', code: 'F-201', color: '#7c3aed',
-          frequency: 'Cada 15 min', schedule: '5:00 AM - 9:30 PM', price: 2800,
-          stops: [
-            { name: 'Maltería', order: 1 },
-            { name: 'Av. Kevin Ángel', order: 2 },
-            { name: 'Fundadores', order: 3 },
-            { name: 'Parque Caldas', order: 4 },
-            { name: 'Terminal Centro (Versalles)', order: 5 }
-          ]
-        },
-        {
-          id: 202, name: 'Bosques del Norte - Centro', code: 'F-202', color: '#0891b2',
-          frequency: 'Cada 12 min', schedule: '5:00 AM - 10:00 PM', price: 2800,
-          stops: [
-            { name: 'Bosques del Norte', order: 1 },
-            { name: 'Av. Santander - Colegio INEM', order: 2 },
-            { name: 'Cable Plaza', order: 3 },
-            { name: 'Parque Caldas', order: 4 },
-            { name: 'Terminal Centro (Versalles)', order: 5 }
-          ]
-        },
-        {
-          id: 203, name: 'Palermo - Niza', code: 'F-203', color: '#dc2626',
-          frequency: 'Cada 18 min', schedule: '5:30 AM - 9:00 PM', price: 2800,
-          stops: [
-            { name: 'Palermo', order: 1 },
-            { name: 'Av. Centenario', order: 2 },
-            { name: 'Parque Caldas', order: 3 },
-            { name: 'Av. Santander', order: 4 },
-            { name: 'Niza', order: 5 }
-          ]
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Buses Manizales',
-      logo: 'assets/images/user/avatar-2.jpg',
-      description: 'Operador con amplia cobertura en barrios periféricos y zonas rurales cercanas.',
-      rating: 4.2,
-      busCount: 60,
-      routes: [
-        {
-          id: 301, name: 'Centro - Minitas', code: 'B-301', color: '#059669',
-          frequency: 'Cada 15 min', schedule: '5:30 AM - 9:30 PM', price: 2800,
-          stops: [
-            { name: 'Terminal Centro (Versalles)', order: 1 },
-            { name: 'Cra 23 con Cll 50', order: 2 },
-            { name: 'Av. Paralela', order: 3 },
-            { name: 'Minitas', order: 4 }
-          ]
-        },
-        {
-          id: 302, name: 'Centro - Solferino', code: 'B-302', color: '#d97706',
-          frequency: 'Cada 20 min', schedule: '5:30 AM - 9:00 PM', price: 2800,
-          stops: [
-            { name: 'Terminal Centro (Versalles)', order: 1 },
-            { name: 'Parque Caldas', order: 2 },
-            { name: 'Av. 12 de Octubre', order: 3 },
-            { name: 'Solferino', order: 4 }
-          ]
-        }
-      ]
+  cargando = true;
+
+  constructor(private viajesService: ViajesService) {}
+
+  ngOnInit(): void {
+    this.cargarRutas();
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
     }
-  ];
-
-  get selectedCompany(): BusCompany | null {
-    if (this.selectedCompanyId === null) return null;
-    return this.companies.find(c => c.id === this.selectedCompanyId) || null;
   }
 
-  selectRoute(route: BusRoute): void {
-    this.selectedRoute = this.selectedRoute?.id === route.id ? null : route;
+  cargarRutas() {
+    this.cargando = true;
+    this.viajesService.getRutas().subscribe({
+      next: (data) => {
+        // En nuestro modelo no hay campo tarifa explícito, asumimos que se sacaría del boleto o le ponemos uno por defecto para la vista.
+        // O si la agregamos luego a la ruta. Por ahora la mockeamos si no viene.
+        this.rutas = data.map(r => ({ ...r, tarifa: r.tarifa || 2950 }));
+        this.rutasFiltradas = [...this.rutas];
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error cargando rutas', err);
+        this.cargando = false;
+      }
+    });
   }
 
-  onCompanyChange(): void {
-    this.selectedRoute = null;
+  filtrarRutas() {
+    if (!this.filtroNombre) {
+      this.rutasFiltradas = [...this.rutas];
+    } else {
+      const termino = this.filtroNombre.toLowerCase();
+      this.rutasFiltradas = this.rutas.filter(r => r.nombre.toLowerCase().includes(termino));
+    }
+  }
+
+  seleccionarRuta(ruta: any) {
+    if (this.rutaSeleccionada?._id === ruta._id) {
+      // Deseleccionar
+      this.rutaSeleccionada = null;
+      this.nodosRuta = [];
+      if (this.routeLayer) this.routeLayer.clearLayers();
+      return;
+    }
+    
+    this.rutaSeleccionada = ruta;
+    this.viajesService.getNodosRuta(ruta._id).subscribe({
+      next: (nodos) => {
+        this.nodosRuta = nodos;
+        this.dibujarRutaEnMapa();
+      },
+      error: (err) => console.error('Error cargando nodos', err)
+    });
+  }
+
+  initMap(): void {
+    // Coordenadas por defecto (Bogotá o Manizales, según el contexto. Pongamos Bogotá centro)
+    this.map = L.map('map', {
+      center: [4.6097, -74.0817],
+      zoom: 13
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(this.map);
+
+    this.routeLayer = L.featureGroup().addTo(this.map);
+  }
+
+  dibujarRutaEnMapa(): void {
+    if (!this.map || !this.routeLayer || !this.nodosRuta.length) return;
+    
+    this.routeLayer.clearLayers();
+
+    const latlngs: L.LatLngExpression[] = [];
+
+    this.nodosRuta.forEach((nodo, index) => {
+      const latlng: L.LatLngExpression = [nodo.latitud, nodo.longitud];
+      latlngs.push(latlng);
+
+      // Crear marcador para cada nodo/paradero
+      const isStart = index === 0;
+      const isEnd = index === this.nodosRuta.length - 1;
+      
+      let markerColor = 'blue';
+      if (isStart) markerColor = 'green';
+      if (isEnd) markerColor = 'red';
+
+      const circleMarker = L.circleMarker(latlng, {
+        radius: 6,
+        fillColor: markerColor,
+        color: '#fff',
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      }).bindPopup(`<b>${nodo.nombre}</b><br/>Orden: ${nodo.orden}`);
+      
+      this.routeLayer?.addLayer(circleMarker);
+    });
+
+    // Dibujar línea conectando los nodos
+    const polyline = L.polyline(latlngs, { color: '#4680FF', weight: 4, opacity: 0.7 });
+    this.routeLayer.addLayer(polyline);
+
+    // Ajustar vista del mapa para que quepa toda la ruta
+    this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
   }
 }

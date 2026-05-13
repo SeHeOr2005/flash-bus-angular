@@ -1,0 +1,71 @@
+<div class="p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-success-light text-success rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
+        <i class="ti ti-wallet"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Recarga de Saldo</h4>
+        <p class="text-muted mb-0">Agrega saldo a tu tarjeta de transporte con ePayco</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <app-card>
+        <div class="text-center mb-4">
+          <h5 class="text-muted">Saldo Actual</h5>
+          <h1 class="display-4 text-primary fw-bold">${{ saldoActual | number }}</h1>
+        </div>
+
+        <hr class="my-4">
+
+        <h5 class="mb-3">Selecciona el monto a recargar</h5>
+        
+        <div class="row g-3 mb-4">
+          @for (monto of montosPredefinidos; track monto) {
+            <div class="col-6 col-sm-3">
+              <button class="btn btn-outline-primary w-100 py-3" 
+                      [class.active]="montoSeleccionado === monto && !montoPersonalizado"
+                      (click)="seleccionarMonto(monto)">
+                ${{ monto / 1000 }}k
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">O ingresa un monto personalizado</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control form-control-lg" 
+                   [(ngModel)]="montoPersonalizado" 
+                   (focus)="montoSeleccionado = null"
+                   placeholder="Mínimo $5,000 - Máximo $500,000">
+          </div>
+          @if (montoPersonalizado && !montoValido) {
+            <div class="text-danger small mt-1">El monto debe estar entre $5,000 y $500,000</div>
+          }
+        </div>
+
+        <div class="bg-light p-4 rounded-3 mb-4 text-center">
+          <p class="mb-1 text-muted">Saldo proyectado después de recargar</p>
+          <h3 class="text-success mb-0">${{ saldoProyectado | number }}</h3>
+          <small class="text-muted d-block mt-2">* Aplican comisiones según el método de pago elegido en ePayco.</small>
+        </div>
+
+        <button class="btn btn-primary btn-lg w-100" 
+                [disabled]="!montoValido" 
+                (click)="continuarPago()">
+          <i class="ti ti-credit-card me-2"></i> Continuar al pago con ePayco
+        </button>
+
+        <div class="text-center mt-4">
+          <img src="https://epayco.com/wp-content/uploads/2020/06/logo-epayco.svg" alt="ePayco" height="30">
+          <p class="text-muted small mt-2 mb-0">Tus datos están protegidos y procesados de forma segura por ePayco.</p>
+        </div>
+      </app-card>
+    </div>
+  </div>
+</div>

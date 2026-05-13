@@ -1,0 +1,128 @@
+<div class="p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-warning-light text-warning rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
+        <i class="ti ti-steering-wheel"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Panel de Conductor</h4>
+        <p class="text-muted mb-0">Gestiona tus turnos y reporta incidentes en ruta</p>
+      </div>
+    </div>
+  </div>
+
+  @if (cargando) {
+    <div class="text-center p-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">Cargando información del turno...</p>
+    </div>
+  } @else {
+    
+    <!-- Estado: Turno Activo (HU-006 & HU-007) -->
+    @if (turnoActivo) {
+      <div class="row">
+        <!-- Info del Turno -->
+        <div class="col-lg-7 mb-4">
+          <app-card>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0 text-success"><i class="ti ti-circle-check-filled me-2"></i>Turno en Curso</h5>
+              <span class="badge bg-success pulse-badge">ACTIVO</span>
+            </div>
+            
+            <div class="bg-light p-4 rounded-3 mb-4 border border-success-subtle">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <small class="text-muted d-block">Ruta Asignada</small>
+                  <span class="fs-5 fw-semibold">{{ turnoActivo.ruta_id?.nombre || 'Ruta Actual' }}</span>
+                </div>
+                <div class="col-sm-6">
+                  <small class="text-muted d-block">Vehículo</small>
+                  <span class="fs-5 fw-semibold"><i class="ti ti-bus me-2"></i>{{ turnoActivo.bus_id?.placa || 'N/A' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-danger btn-lg w-100" (click)="finalizarTurno()">
+              <i class="ti ti-power me-2"></i> Finalizar Turno
+            </button>
+          </app-card>
+        </div>
+
+        <!-- Reporte de Incidentes (HU-007) -->
+        <div class="col-lg-5 mb-4">
+          <app-card>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0 text-danger"><i class="ti ti-alert-triangle me-2"></i>Centro de Reportes</h5>
+            </div>
+            <p class="text-muted small">Usa esta sección únicamente si hay alguna novedad que afecte el recorrido del bus.</p>
+            
+            @if (!mostrandoFormIncidente) {
+              <button class="btn btn-outline-danger w-100 py-3 mt-2" style="border-style: dashed;" (click)="abrirReporteIncidente()">
+                <i class="ti ti-plus me-2"></i> Crear Nuevo Reporte de Incidente
+              </button>
+            } @else {
+              <div class="p-3 bg-danger-subtle rounded-3 border border-danger">
+                <div class="mb-3">
+                  <label class="form-label text-danger fw-semibold">Tipo de Incidente</label>
+                  <select class="form-select border-danger" [(ngModel)]="nuevoIncidente.tipo">
+                    <option value="" disabled selected>Seleccione...</option>
+                    @for (tipo of tiposIncidente; track tipo) {
+                      <option [value]="tipo">{{ tipo }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-danger fw-semibold">Descripción Detallada</label>
+                  <textarea class="form-select border-danger" rows="3" [(ngModel)]="nuevoIncidente.descripcion" placeholder="Explique brevemente lo sucedido..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-secondary flex-grow-1" (click)="cancelarReporte()">Cancelar</button>
+                  <button class="btn btn-danger flex-grow-1" (click)="enviarReporte()" [disabled]="!nuevoIncidente.tipo || !nuevoIncidente.descripcion">
+                    <i class="ti ti-send me-2"></i> Enviar a Central
+                  </button>
+                </div>
+              </div>
+            }
+          </app-card>
+        </div>
+      </div>
+    } 
+    
+    <!-- Estado: Sin turno (HU-006 - Iniciar) -->
+    @else {
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <app-card>
+            <div class="text-center p-4">
+              <i class="ti ti-steering-wheel text-muted mb-3" style="font-size: 64px;"></i>
+              <h4 class="mb-2">No tienes un turno activo</h4>
+              <p class="text-muted mb-4">Selecciona una de las programaciones asignadas para el día de hoy e inicia tu jornada.</p>
+            </div>
+
+            @if (misProgramaciones.length > 0) {
+              <h6 class="mb-3">Tus próximas asignaciones:</h6>
+              <div class="list-group mb-4">
+                @for (prog of misProgramaciones; track prog._id) {
+                  <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <div>
+                      <h6 class="mb-1 text-primary">{{ prog.ruta_id?.nombre || 'Ruta' }}</h6>
+                      <small class="text-muted"><i class="ti ti-bus me-1"></i> Bus: {{ prog.bus_id?.placa }} | <i class="ti ti-calendar me-1"></i> {{ prog.fecha | date:'short' }}</small>
+                    </div>
+                    <button class="btn btn-success btn-sm" (click)="iniciarTurno(prog._id)">
+                      <i class="ti ti-player-play me-1"></i> Iniciar
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="alert alert-info d-flex align-items-center">
+                <i class="ti ti-info-circle fs-4 me-2"></i>
+                <div>No tienes programaciones asignadas para hoy. Contacta con despacho.</div>
+              </div>
+            }
+          </app-card>
+        </div>
+      </div>
+    }
+  }
+</div>

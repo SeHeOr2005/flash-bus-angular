@@ -1,0 +1,77 @@
+<div class="search-page">
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div class="header-title d-flex align-items-center gap-3">
+      <div class="header-icon-wrap" style="width:48px;height:48px;border-radius:12px;background:rgba(44,168,127,0.1);color:#2ca87f;display:flex;align-items:center;justify-content:center;font-size:24px;">
+        <i class="ti ti-map-pin"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-semibold">Paraderos Cercanos</h4>
+        <p class="text-muted mb-0">Encuentra dónde abordar el bus basado en tu ubicación actual</p>
+      </div>
+    </div>
+    <button mat-raised-button color="primary" (click)="buscarUbicacion()" [disabled]="cargando">
+      <mat-icon>my_location</mat-icon>
+      Actualizar Ubicación
+    </button>
+  </div>
+
+  <div class="row">
+    <!-- Listado de Paraderos -->
+    <div class="col-md-4 col-12">
+      <app-card>
+        <h5 class="mb-3">Los 5 más cercanos</h5>
+        
+        @if (errorLocalizacion) {
+          <div class="alert alert-warning">
+            <i class="ti ti-alert-triangle me-2"></i> {{ errorLocalizacion }}
+          </div>
+        }
+
+        @if (cargando) {
+          <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Buscando...</span>
+            </div>
+            <p class="mt-2 text-muted">Obteniendo coordenadas...</p>
+          </div>
+        } @else {
+          <div class="list-group">
+            @for (p of paraderos; track p._id; let i = $index) {
+              <button type="button" class="list-group-item list-group-item-action p-3 mb-2 rounded border"
+                      (click)="enfocarParadero(p)">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="mb-0 text-primary fw-bold">{{ i + 1 }}. {{ p.nombre }}</h6>
+                  <span class="badge bg-success rounded-pill">{{ p.distancia }} m</span>
+                </div>
+                <p class="mb-0 text-sm text-muted">
+                  <i class="ti ti-route me-1"></i> Rutas que pasan por aquí:
+                  <!-- Asumimos que ruta_id se hizo populate o mostramos info genérica -->
+                  @if (p.ruta_id) {
+                    <b>{{ p.ruta_id.nombre }}</b>
+                  } @else {
+                    Varias
+                  }
+                </p>
+              </button>
+            }
+          </div>
+          
+          @if (paraderos.length === 0 && !errorLocalizacion) {
+             <div class="empty-state p-4 text-center">
+                <i class="ti ti-map-pin-off text-muted" style="font-size: 40px;"></i>
+                <h6 class="mt-2">No hay paraderos cerca</h6>
+              </div>
+          }
+        }
+      </app-card>
+    </div>
+
+    <!-- Mapa -->
+    <div class="col-md-8 col-12">
+      <app-card [padding]="0" style="height: 100%;">
+        <div id="map-paraderos" style="width: 100%; height: 600px; border-radius: 8px;"></div>
+      </app-card>
+    </div>
+  </div>
+</div>

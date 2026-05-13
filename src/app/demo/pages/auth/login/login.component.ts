@@ -31,7 +31,6 @@ declare global {
 export default class LoginComponent {
   hide = true;
   email = new FormControl('', [Validators.required, Validators.email]);
-  emailValue = '';
   password = '';
   loading = false;
   socialLoading = false;

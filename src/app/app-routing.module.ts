@@ -17,6 +17,19 @@ const routes: Routes = [
         redirectTo: '/dashboard',
         pathMatch: 'full'
       },
+      // Enlaces legacy del menú / bookmarks → rutas reales del proyecto
+      { path: 'buses', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'routes', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'drivers', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'monitoring', redirectTo: 'analytics', pathMatch: 'full' },
+      { path: 'trips', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'companies', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'settings', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'my-route', redirectTo: 'search-buses', pathMatch: 'full' },
+      {
+        path: 'admin',
+        children: [{ path: 'permissions', redirectTo: '/permissions', pathMatch: 'full' }]
+      },
       {
         path: 'dashboard',
         loadComponent: () => import('./demo/pages/dashboard/dashboard.component')
@@ -30,8 +43,32 @@ const routes: Routes = [
         loadComponent: () => import('./demo/pages/search-buses/search-buses.component')
       },
       {
+        path: 'paraderos-cercanos',
+        loadComponent: () => import('./demo/pages/paraderos-cercanos/paraderos-cercanos.component')
+      },
+      {
         path: 'ticket',
         loadComponent: () => import('./demo/pages/ticket/ticket.component')
+      },
+      {
+        path: 'recarga-saldo',
+        loadComponent: () => import('./demo/pages/recarga-saldo/recarga-saldo.component')
+      },
+      {
+        path: 'my-trips',
+        loadComponent: () => import('./demo/pages/conductor-trips/conductor-trips.component')
+      },
+      {
+        path: 'incidents',
+        loadComponent: () => import('./demo/pages/incidents-dashboard/incidents-dashboard.component')
+      },
+      {
+        path: 'management',
+        loadComponent: () => import('./demo/pages/management/management.component')
+      },
+      {
+        path: 'analytics',
+        loadComponent: () => import('./demo/pages/analytics-dashboard/analytics-dashboard.component')
       },
       {
         path: 'component',

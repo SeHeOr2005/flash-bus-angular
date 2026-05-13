@@ -28,7 +28,7 @@ export const menus: Navigation[] = [
       },
       {
         id: 'search-buses',
-        title: 'Buscar Buses',
+        title: 'Buscar Rutas',
         type: 'item',
         classes: 'nav-item',
         url: '/search-buses',
@@ -36,12 +36,30 @@ export const menus: Navigation[] = [
         allowedRoles: [UserRole.CIUDADANO]
       },
       {
+        id: 'paraderos-cercanos',
+        title: 'Paraderos Cercanos',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/paraderos-cercanos',
+        icon: '#custom-map-pin',
+        allowedRoles: [UserRole.CIUDADANO]
+      },
+      {
         id: 'ticket',
-        title: 'Tarjeta',
+        title: 'Mis Boletos',
         type: 'item',
         classes: 'nav-item',
         url: '/ticket',
         icon: '#custom-credit-card',
+        allowedRoles: [UserRole.CIUDADANO]
+      },
+      {
+        id: 'recarga-saldo',
+        title: 'Recargar Saldo (ePayco)',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/recarga-saldo',
+        icon: '#custom-wallet',
         allowedRoles: [UserRole.CIUDADANO]
       }
     ]
@@ -58,7 +76,7 @@ export const menus: Navigation[] = [
         title: 'Buses',
         type: 'item',
         classes: 'nav-item',
-        url: '/buses',
+        url: '/management',
         icon: '#custom-notification-status',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       },
@@ -67,7 +85,7 @@ export const menus: Navigation[] = [
         title: 'Rutas',
         type: 'item',
         classes: 'nav-item',
-        url: '/routes',
+        url: '/management',
         icon: '#custom-map-pin',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       },
@@ -76,7 +94,7 @@ export const menus: Navigation[] = [
         title: 'Conductores',
         type: 'item',
         classes: 'nav-item',
-        url: '/drivers',
+        url: '/management',
         icon: '#custom-profile-2user-outline',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       }
@@ -94,8 +112,17 @@ export const menus: Navigation[] = [
         title: 'Monitoreo en Vivo',
         type: 'item',
         classes: 'nav-item',
-        url: '/monitoring',
+        url: '/analytics',
         icon: '#custom-status-up',
+        allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA, UserRole.SUPERVISOR]
+      },
+      {
+        id: 'incidents',
+        title: 'Incidentes',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/incidents',
+        icon: '#custom-alert',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA, UserRole.SUPERVISOR]
       },
       {
@@ -103,16 +130,16 @@ export const menus: Navigation[] = [
         title: 'Viajes',
         type: 'item',
         classes: 'nav-item',
-        url: '/trips',
+        url: '/management',
         icon: '#custom-clipboard',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA, UserRole.SUPERVISOR]
       },
       {
         id: 'reports',
-        title: 'Reportes',
+        title: 'Analíticas de Negocio',
         type: 'item',
         classes: 'nav-item',
-        url: '/reports',
+        url: '/analytics',
         icon: '#custom-chart',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA, UserRole.SUPERVISOR]
       }
@@ -139,7 +166,7 @@ export const menus: Navigation[] = [
         title: 'Mi Ruta',
         type: 'item',
         classes: 'nav-item',
-        url: '/my-route',
+        url: '/search-buses',
         icon: '#custom-map-pin',
         allowedRoles: [UserRole.CONDUCTOR]
       }
@@ -178,16 +205,25 @@ export const menus: Navigation[] = [
         type: 'item',
         classes: 'nav-item',
         url: '/permissions',
-        icon: '#custom-password-check',
+        icon: '#custom-lock',
         allowedRoles: [UserRole.ADMIN_SISTEMA],
         requiredPermissions: [{ url: '/permissions', method: 'GET' }]
+      },
+      {
+        id: 'management',
+        title: 'Gestión de Buses y Rutas',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/management',
+        icon: '#custom-settings',
+        allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       },
       {
         id: 'companies',
         title: 'Empresas',
         type: 'item',
         classes: 'nav-item',
-        url: '/companies',
+        url: '/management',
         icon: '#custom-building',
         allowedRoles: [UserRole.ADMIN_SISTEMA]
       },
@@ -196,7 +232,7 @@ export const menus: Navigation[] = [
         title: 'Configuración',
         type: 'item',
         classes: 'nav-item',
-        url: '/settings',
+        url: '/dashboard',
         icon: '#custom-setting-outline',
         allowedRoles: [UserRole.ADMIN_SISTEMA]
       }

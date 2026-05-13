@@ -3,8 +3,8 @@
  * Los roles dinámicos creados en el backend se almacenan como string y son compatibles.
  */
 export enum UserRole {
-  ADMIN_SISTEMA = 'ADMIN_SISTEMA',
-  ADMIN_EMPRESA = 'ADMIN_EMPRESA',
+  ADMIN_SISTEMA = 'ADMINISTRADOR_SISTEMA',
+  ADMIN_EMPRESA = 'ADMINISTRADOR_EMPRESA',
   SUPERVISOR = 'SUPERVISOR',
   CONDUCTOR = 'CONDUCTOR',
   CIUDADANO = 'CIUDADANO'

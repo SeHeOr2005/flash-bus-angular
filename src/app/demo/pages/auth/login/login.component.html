@@ -75,7 +75,7 @@
           <div class="text-start">
             <label class="field-label">Correo electrónico</label>
             <mat-form-field appearance="outline" class="w-100 m-t-5">
-              <input matInput [formControl]="email" required placeholder="tu@correo.com" [(ngModel)]="emailValue" />
+              <input matInput [formControl]="email" required placeholder="tu@correo.com" />
               @if (email.invalid) {
                 <mat-error>{{ getErrorMessage() }}</mat-error>
               }

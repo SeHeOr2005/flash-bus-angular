@@ -1,0 +1,22 @@
+.pulse-badge {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(32, 201, 151, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(32, 201, 151, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(32, 201, 151, 0);
+  }
+}
+
+.list-group-item {
+  transition: all 0.2s;
+  &:hover {
+    background-color: #f8fafc;
+  }
+}

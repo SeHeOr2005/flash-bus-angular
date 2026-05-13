@@ -1,0 +1,201 @@
+<div class="p-4">
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-wrap bg-primary-light text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 24px;">
+        <i class="ti ti-settings"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Gestión del Sistema</h4>
+        <p class="text-muted mb-0">Administra rutas, paraderos, buses y programaciones</p>
+      </div>
+    </div>
+  </div>
+
+  <mat-tab-group class="bg-white rounded shadow-sm p-3">
+    <!-- Rutas (HU-009) -->
+    <mat-tab label="Rutas">
+      <div class="p-4">
+        <div class="row">
+          <div class="col-md-4">
+            <h5>Nueva Ruta</h5>
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="nuevaRuta.nombre">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" [(ngModel)]="nuevaRuta.descripcion"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tarifa</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevaRuta.tarifa">
+            </div>
+            <button class="btn btn-primary w-100" (click)="guardarRuta()">Crear Ruta</button>
+          </div>
+          <div class="col-md-8">
+            <h5>Rutas Existentes</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tarifa</th>
+                  <th>Descripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ruta of rutas; track ruta._id) {
+                  <tr>
+                    <td>{{ ruta.nombre }}</td>
+                    <td>${{ ruta.tarifa | number }}</td>
+                    <td>{{ ruta.descripcion }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Paraderos (HU-010) -->
+    <mat-tab label="Paraderos">
+      <div class="p-4">
+        <div class="row">
+          <div class="col-md-4">
+            <h5>Nuevo Paradero</h5>
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="nuevoParadero.nombre">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Latitud</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevoParadero.latitud">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Longitud</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevoParadero.longitud">
+            </div>
+            <button class="btn btn-primary w-100" (click)="guardarParadero()">Registrar Paradero</button>
+          </div>
+          <div class="col-md-8">
+            <h5>Paraderos Registrados</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Ubicación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of paraderos; track p._id) {
+                  <tr>
+                    <td>{{ p.nombre }}</td>
+                    <td>{{ p.latitud }}, {{ p.longitud }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Buses (HU-012) -->
+    <mat-tab label="Buses">
+      <div class="p-4">
+        <div class="row">
+          <div class="col-md-4">
+            <h5>Nuevo Bus</h5>
+            <div class="mb-3">
+              <label class="form-label">Placa</label>
+              <input type="text" class="form-control" [(ngModel)]="nuevoBus.placa">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Modelo</label>
+              <input type="text" class="form-control" [(ngModel)]="nuevoBus.modelo">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Capacidad</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevoBus.capacidad">
+            </div>
+            <button class="btn btn-primary w-100" (click)="guardarBus()">Registrar Bus</button>
+          </div>
+          <div class="col-md-8">
+            <h5>Flota de Buses</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Placa</th>
+                  <th>Modelo</th>
+                  <th>Capacidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of buses; track b._id) {
+                  <tr>
+                    <td>{{ b.placa }}</td>
+                    <td>{{ b.modelo }}</td>
+                    <td>{{ b.capacidad }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Programación (HU-011) -->
+    <mat-tab label="Programación">
+      <div class="p-4">
+        <div class="row">
+          <div class="col-md-4">
+            <h5>Nueva Programación</h5>
+            <div class="mb-3">
+              <label class="form-label">Ruta</label>
+              <select class="form-select" [(ngModel)]="nuevaProgramacion.ruta_id">
+                @for (r of rutas; track r._id) {
+                  <option [value]="r._id">{{ r.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Bus</label>
+              <select class="form-select" [(ngModel)]="nuevaProgramacion.bus_id">
+                @for (b of buses; track b._id) {
+                  <option [value]="b._id">{{ b.placa }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora</label>
+              <input type="datetime-local" class="form-control" [(ngModel)]="nuevaProgramacion.fecha">
+            </div>
+            <button class="btn btn-primary w-100" (click)="guardarProgramacion()">Crear Turno</button>
+          </div>
+          <div class="col-md-8">
+            <h5>Próximos Turnos</h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Ruta</th>
+                  <th>Bus</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (prog of programaciones; track prog._id) {
+                  <tr>
+                    <td>{{ prog.ruta_id?.nombre }}</td>
+                    <td>{{ prog.bus_id?.placa }}</td>
+                    <td>{{ prog.fecha | date:'medium' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
