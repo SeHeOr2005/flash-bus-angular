@@ -85,6 +85,7 @@ export default class TicketComponent implements OnInit, OnDestroy {
         this.boletosActivos = data.filter(b => b.estado === 'activo');
         this.boletosCompletados = data.filter(b => b.estado === 'completado');
         this.cargando = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error cargando boletos', err);
@@ -92,6 +93,7 @@ export default class TicketComponent implements OnInit, OnDestroy {
         this.boletosActivos = [];
         this.boletosCompletados = [];
         this.cargando = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -111,6 +113,7 @@ export default class TicketComponent implements OnInit, OnDestroy {
       error: (err) => {
         alert('Error al abordar: ' + err.message);
         this.cargando = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -126,6 +129,7 @@ export default class TicketComponent implements OnInit, OnDestroy {
       error: (err) => {
         alert('Error al descender');
         this.cargando = false;
+        this.cdr.detectChanges();
       }
     });
   }
