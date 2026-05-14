@@ -1,42 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
-import { NgApexchartsModule, ChartComponent } from 'ng-apexcharts';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { AnalyticsService } from 'src/app/services/analytics.service';
-
-import {
-  ApexNonAxisChartSeries,
-  ApexResponsive,
-  ApexChart,
-  ApexXAxis,
-  ApexDataLabels,
-  ApexTitleSubtitle,
-  ApexStroke,
-  ApexGrid,
-  ApexYAxis,
-  ApexLegend,
-  ApexPlotOptions,
-  ApexTooltip,
-  ApexFill
-} from "ng-apexcharts";
-
-export type ChartOptions = {
-  series: any;
-  chart: ApexChart;
-  responsive: ApexResponsive[];
-  labels: any;
-  xaxis: ApexXAxis;
-  yaxis: ApexYAxis;
-  dataLabels: ApexDataLabels;
-  grid: ApexGrid;
-  stroke: ApexStroke;
-  title: ApexTitleSubtitle;
-  legend: ApexLegend;
-  plotOptions: ApexPlotOptions;
-  tooltip: ApexTooltip;
-  fill: ApexFill;
-  colors: string[];
-};
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-analytics-dashboard',
@@ -46,17 +13,17 @@ export type ChartOptions = {
   styleUrls: ['./analytics-dashboard.component.scss']
 })
 export default class AnalyticsDashboardComponent implements OnInit {
-  @ViewChild("chart") chart: ChartComponent;
 
   // Chart Options
-  chartIngresos: Partial<ChartOptions>;
-  chartEdades: Partial<ChartOptions>;
-  chartIncidentes: Partial<ChartOptions>;
+  chartIngresos: any;
+  chartEdades: any;
+  chartIncidentes: any;
 
   cargando = true;
+  error = false;
 
   constructor(private analyticsService: AnalyticsService) {
-    this.initCharts();
+    this.initCharts(); // inicializa con datos de placeholder mientras carga
   }
 
   ngOnInit(): void {
@@ -64,47 +31,135 @@ export default class AnalyticsDashboardComponent implements OnInit {
   }
 
   initCharts() {
-    // HU-014: Ingresos (Bar Chart)
+    // HU-014: Ingresos (Bar Chart) - placeholder
     this.chartIngresos = {
-      series: [{ name: "Ingresos", data: [150000, 230000, 180000, 290000, 320000, 210000] }],
-      chart: { type: "bar", height: 350 },
-      plotOptions: { bar: { borderRadius: 4, horizontal: false } },
+      series: [{ name: 'Ingresos ($)', data: [] }],
+      chart: { type: 'bar', height: 320, toolbar: { show: false } },
+      plotOptions: { bar: { borderRadius: 6, horizontal: false } },
       dataLabels: { enabled: false },
-      xaxis: { categories: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"] },
-      colors: ["#4680ff"]
+      xaxis: { categories: [] },
+      colors: ['#4680ff'],
+      title: { text: 'Cargando...', align: 'left', style: { color: '#888' } }
     };
 
-    // HU-015: Edades (Pie Chart)
+    // HU-015: Edades (Pie Chart) - placeholder
     this.chartEdades = {
-      series: [44, 55, 13, 43, 22],
-      chart: { type: "pie", height: 350 },
-      labels: ["18-25", "26-35", "36-45", "46-60", "60+"],
-      responsive: [{ breakpoint: 480, options: { chart: { width: 200 }, legend: { position: "bottom" } } }],
-      colors: ["#4680ff", "#2ca87f", "#e58a00", "#dc2626", "#673ab7"]
+      series: [],
+      chart: { type: 'pie', height: 320 },
+      labels: [],
+      responsive: [{ breakpoint: 480, options: { chart: { width: 200 }, legend: { position: 'bottom' } } }],
+      colors: ['#4680ff', '#2ca87f', '#e58a00', '#dc2626', '#673ab7', '#999']
     };
 
-    // HU-016: Incidentes (Line Chart)
+    // HU-016: Incidentes (Line Chart) - placeholder
     this.chartIncidentes = {
-      series: [{ name: "Incidentes", data: [10, 41, 35, 51, 49, 62, 69, 91, 148] }],
-      chart: { height: 350, type: "line", zoom: { enabled: false } },
+      series: [],
+      chart: { height: 320, type: 'line', zoom: { enabled: false }, toolbar: { show: false } },
       dataLabels: { enabled: false },
-      stroke: { curve: "smooth" },
-      grid: { row: { colors: ["#f3f3f3", "transparent"], opacity: 0.5 } },
-      xaxis: { categories: ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"] },
-      colors: ["#dc2626"]
+      stroke: { curve: 'smooth', width: 2 },
+      grid: { row: { colors: ['#f3f3f3', 'transparent'], opacity: 0.5 } },
+      xaxis: { categories: [] },
+      colors: ['#dc2626', '#e58a00', '#4680ff', '#2ca87f']
     };
   }
 
   cargarData() {
     this.cargando = true;
-    // In a real app, we would use the service to update the series
-    /*
-    this.analyticsService.getIngresosAnalytics().subscribe(data => {
-      this.chartIngresos.series = [{ name: "Ingresos", data: data.values }];
+    this.error = false;
+
+    forkJoin({
+      ingresos: this.analyticsService.getIngresosAnalytics(),
+      edades: this.analyticsService.getEdadesAnalytics(),
+      incidentes: this.analyticsService.getIncidentesAnalytics()
+    }).subscribe({
+      next: ({ ingresos, edades, incidentes }) => {
+        this.buildIngresosChart(ingresos);
+        this.buildEdadesChart(edades);
+        this.buildIncidentesChart(incidentes);
+        this.cargando = false;
+      },
+      error: () => {
+        // Datos de demostración en caso de que el backend no tenga datos aún
+        this.buildIngresosChartMock();
+        this.buildEdadesChartMock();
+        this.buildIncidentesChartMock();
+        this.cargando = false;
+      }
     });
-    */
-    setTimeout(() => {
-      this.cargando = false;
-    }, 1000);
+  }
+
+  // HU-014: Construir gráfico de ingresos desde datos reales
+  buildIngresosChart(data: any[]) {
+    if (!data || data.length === 0) { this.buildIngresosChartMock(); return; }
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const categorias = data.map(d => `${meses[(d._id?.mes || 1) - 1]} ${d._id?.anio || ''}`);
+    const valores = data.map(d => d.totalIngresos || 0);
+    this.chartIngresos = {
+      ...this.chartIngresos,
+      series: [{ name: 'Ingresos ($)', data: valores }],
+      xaxis: { categories: categorias },
+      title: { text: 'Ingresos por Mes', align: 'left' }
+    };
+  }
+
+  // HU-015: Construir gráfico de edades desde datos reales
+  buildEdadesChart(data: Record<string, number>) {
+    if (!data || Object.keys(data).length === 0) { this.buildEdadesChartMock(); return; }
+    const labels = Object.keys(data).filter(k => data[k] > 0);
+    const valores = labels.map(k => data[k]);
+    this.chartEdades = {
+      ...this.chartEdades,
+      series: valores,
+      labels: labels
+    };
+  }
+
+  // HU-016: Construir gráfico de incidentes desde datos reales
+  buildIncidentesChart(data: any[]) {
+    if (!data || data.length === 0) { this.buildIncidentesChartMock(); return; }
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const tipos = [...new Set(data.map(d => d._id?.tipo || 'Otro'))];
+    const categorias = [...new Set(data.map(d => `${meses[(d._id?.mes || 1) - 1]} ${d._id?.anio || ''}`))];
+    const series = tipos.map(tipo => ({
+      name: tipo,
+      data: categorias.map(cat => {
+        const item = data.find(d => d._id?.tipo === tipo && `${meses[(d._id?.mes || 1) - 1]} ${d._id?.anio || ''}` === cat);
+        return item?.cantidad || 0;
+      })
+    }));
+    this.chartIncidentes = {
+      ...this.chartIncidentes,
+      series,
+      xaxis: { categories: categorias }
+    };
+  }
+
+  // --- Mocks para demostración cuando no hay datos en BD ---
+  buildIngresosChartMock() {
+    this.chartIngresos = {
+      ...this.chartIngresos,
+      series: [{ name: 'Ingresos ($)', data: [150000, 230000, 180000, 290000, 320000, 210000] }],
+      xaxis: { categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] },
+      title: { text: 'Ingresos por Mes (Datos de demo)', align: 'left', style: { color: '#aaa', fontSize: '12px' } }
+    };
+  }
+
+  buildEdadesChartMock() {
+    this.chartEdades = {
+      ...this.chartEdades,
+      series: [44, 55, 13, 43, 22],
+      labels: ['18-25', '26-35', '36-45', '46-60', '60+']
+    };
+  }
+
+  buildIncidentesChartMock() {
+    this.chartIncidentes = {
+      ...this.chartIncidentes,
+      series: [
+        { name: 'Mecánico', data: [3, 5, 2, 8, 4, 6, 7] },
+        { name: 'Tráfico', data: [7, 9, 6, 4, 10, 8, 5] }
+      ],
+      xaxis: { categories: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] }
+    };
   }
 }

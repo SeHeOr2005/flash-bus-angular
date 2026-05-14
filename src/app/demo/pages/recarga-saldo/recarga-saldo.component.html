@@ -55,8 +55,34 @@
           <small class="text-muted d-block mt-2">* Aplican comisiones según el método de pago elegido en ePayco.</small>
         </div>
 
+        @if (vincularModo && !cargando) {
+          <div class="alert alert-info mb-4">
+            <h6 class="alert-heading fw-bold"><i class="ti ti-info-circle me-2"></i>Vincular Billetera</h6>
+            <p class="small mb-3">No hemos encontrado una tarjeta vinculada a tu cuenta. Por favor completa estos datos:</p>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Número de Documento (CC)</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="documentoParaVincular" placeholder="Ej: 12345678">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Selecciona el tipo de tarjeta</label>
+              <select class="form-select form-select-sm" [(ngModel)]="nuevoMetodoPagoGeneralId">
+                <option value="" disabled selected>Seleccione...</option>
+                @for (mp of metodosPagoGenerales; track mp._id) {
+                  <option [value]="mp._id">{{ mp.nombre }}</option>
+                }
+              </select>
+            </div>
+
+            <button class="btn btn-info btn-sm w-100" (click)="vincularNuevaTarjeta()" [disabled]="!documentoParaVincular || !nuevoMetodoPagoGeneralId">
+              <i class="ti ti-link me-1"></i> Vincular Ahora
+            </button>
+          </div>
+        }
+
         <button class="btn btn-primary btn-lg w-100" 
-                [disabled]="!montoValido" 
+                [disabled]="!montoValido || vincularModo" 
                 (click)="continuarPago()">
           <i class="ti ti-credit-card me-2"></i> Continuar al pago con ePayco
         </button>

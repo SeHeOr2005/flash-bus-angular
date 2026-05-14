@@ -9,24 +9,36 @@ export class IncidentesService {
 
   constructor(private api: ApiService) { }
 
-  // HU-007: Reporte de incidente
-  reportarIncidente(programacionId: string, descripcion: string, tipo: string): Observable<any> {
-    return this.api.post<any>('incidentes', {
-      programacion_id: programacionId,
-      descripcion,
-      tipo,
-      fecha_reporte: new Date()
-    });
+  // HU-007: Reporte de incidente - campos que acepta el modelo backend
+  reportarIncidente(tipo: string, descripcion: string, reportado_por?: string): Observable<any> {
+    const body: any = { tipo, descripcion };
+    if (reportado_por) body.reportado_por = reportado_por;
+    return this.api.post<any>('incidentes', body);
   }
 
-  // HU-008: Consulta de incidentes por bus (o programación)
-  getIncidentes(filtros: any = {}): Observable<any[]> {
-    // Si backend soporta query params:
-    let queryParams = '?';
-    if (filtros.bus_id) queryParams += `bus_id=${filtros.bus_id}&`;
-    if (filtros.fecha) queryParams += `fecha=${filtros.fecha}&`;
-    if (filtros.programacion_id) queryParams += `programacion_id=${filtros.programacion_id}`;
+  // HU-008: Consulta de todos los incidentes
+  getIncidentes(): Observable<any[]> {
+    return this.api.get<any[]>('incidentes');
+  }
 
-    return this.api.get<any[]>(`incidentes${queryParams}`);
+  // Obtener todos los incidentes asociados a buses
+  getAllIncidentesBus(): Observable<any[]> {
+    return this.api.get<any[]>('incidentes-bus');
+  }
+
+  // Obtener incidentes de un bus específico vía incidente-bus
+  getIncidentesBus(busId: string): Observable<any[]> {
+    return this.api.get<any[]>(`incidentes-bus/bus/${busId}`);
+  }
+
+  // Reportar incidente asociado a un bus
+  reportarIncidenteBus(busId: string, incidenteId: string, descripcion: string): Observable<any> {
+    return this.api.post<any>('incidentes-bus', { bus_id: busId, incidente_id: incidenteId, descripcion });
+  }
+
+  // Reportar incidente asociado a un bus con severidad
+  reportarIncidenteBusSeveridad(busId: string, incidenteId: string, descripcion: string, severidad: string): Observable<any> {
+    return this.api.post<any>('incidentes-bus', { bus_id: busId, incidente_id: incidenteId, descripcion, severidad });
   }
 }
+

@@ -11,9 +11,9 @@
     </div>
   </div>
 
-  <mat-tab-group class="bg-white rounded shadow-sm p-3">
+  <div class="bg-white rounded shadow-sm p-3">
     <!-- Rutas (HU-009) -->
-    <mat-tab label="Rutas">
+    @if (activeSection === 'routes') {
       <div class="p-4">
         <div class="row">
           <div class="col-md-4">
@@ -27,19 +27,31 @@
               <textarea class="form-control" [(ngModel)]="nuevaRuta.descripcion"></textarea>
             </div>
             <div class="mb-3">
-              <label class="form-label">Tarifa</label>
-              <input type="number" class="form-control" [(ngModel)]="nuevaRuta.tarifa">
+              <label class="form-label">Distancia (km)</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevaRuta.distancia_km">
             </div>
-            <button class="btn btn-primary w-100" (click)="guardarRuta()">Crear Ruta</button>
+            <div class="mb-3">
+              <label class="form-label">Duración Estimada (min)</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevaRuta.duracion_estimada">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" (click)="guardarRuta()">
+                {{ editRutaId ? 'Actualizar Ruta' : 'Crear Ruta' }}
+              </button>
+              @if (editRutaId) {
+                <button class="btn btn-secondary" (click)="cancelarEdicionRuta()">Cancelar</button>
+              }
+            </div>
           </div>
           <div class="col-md-8">
             <h5>Rutas Existentes</h5>
-            <table class="table">
+            <table class="table align-middle">
               <thead>
                 <tr>
                   <th>Nombre</th>
                   <th>Tarifa</th>
                   <th>Descripción</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -48,6 +60,16 @@
                     <td>{{ ruta.nombre }}</td>
                     <td>${{ ruta.tarifa | number }}</td>
                     <td>{{ ruta.descripcion }}</td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" (click)="editarRuta(ruta)">
+                          <i class="ti ti-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="eliminarRuta(ruta._id)">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -55,10 +77,10 @@
           </div>
         </div>
       </div>
-    </mat-tab>
+    }
 
     <!-- Paraderos (HU-010) -->
-    <mat-tab label="Paraderos">
+    @if (activeSection === 'stops') {
       <div class="p-4">
         <div class="row">
           <div class="col-md-4">
@@ -75,15 +97,23 @@
               <label class="form-label">Longitud</label>
               <input type="number" class="form-control" [(ngModel)]="nuevoParadero.longitud">
             </div>
-            <button class="btn btn-primary w-100" (click)="guardarParadero()">Registrar Paradero</button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" (click)="guardarParadero()">
+                {{ editParaderoId ? 'Actualizar Paradero' : 'Registrar Paradero' }}
+              </button>
+              @if (editParaderoId) {
+                <button class="btn btn-secondary" (click)="cancelarEdicionParadero()">Cancelar</button>
+              }
+            </div>
           </div>
           <div class="col-md-8">
             <h5>Paraderos Registrados</h5>
-            <table class="table">
+            <table class="table align-middle">
               <thead>
                 <tr>
                   <th>Nombre</th>
                   <th>Ubicación</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +121,16 @@
                   <tr>
                     <td>{{ p.nombre }}</td>
                     <td>{{ p.latitud }}, {{ p.longitud }}</td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" (click)="editarParadero(p)">
+                          <i class="ti ti-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="eliminarParadero(p._id)">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -98,10 +138,10 @@
           </div>
         </div>
       </div>
-    </mat-tab>
+    }
 
     <!-- Buses (HU-012) -->
-    <mat-tab label="Buses">
+    @if (activeSection === 'buses') {
       <div class="p-4">
         <div class="row">
           <div class="col-md-4">
@@ -115,19 +155,31 @@
               <input type="text" class="form-control" [(ngModel)]="nuevoBus.modelo">
             </div>
             <div class="mb-3">
-              <label class="form-label">Capacidad</label>
-              <input type="number" class="form-control" [(ngModel)]="nuevoBus.capacidad">
+              <label class="form-label">Capacidad Sentados</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevoBus.capacidad_sentados">
             </div>
-            <button class="btn btn-primary w-100" (click)="guardarBus()">Registrar Bus</button>
+            <div class="mb-3">
+              <label class="form-label">Capacidad Parados</label>
+              <input type="number" class="form-control" [(ngModel)]="nuevoBus.capacidad_parados">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" (click)="guardarBus()">
+                {{ editBusId ? 'Actualizar Bus' : 'Registrar Bus' }}
+              </button>
+              @if (editBusId) {
+                <button class="btn btn-secondary" (click)="cancelarEdicionBus()">Cancelar</button>
+              }
+            </div>
           </div>
           <div class="col-md-8">
             <h5>Flota de Buses</h5>
-            <table class="table">
+            <table class="table align-middle">
               <thead>
                 <tr>
                   <th>Placa</th>
                   <th>Modelo</th>
                   <th>Capacidad</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,6 +188,16 @@
                     <td>{{ b.placa }}</td>
                     <td>{{ b.modelo }}</td>
                     <td>{{ b.capacidad }}</td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" (click)="editarBus(b)">
+                          <i class="ti ti-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="eliminarBus(b._id)">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -143,10 +205,10 @@
           </div>
         </div>
       </div>
-    </mat-tab>
+    }
 
     <!-- Programación (HU-011) -->
-    <mat-tab label="Programación">
+    @if (activeSection === 'schedules') {
       <div class="p-4">
         <div class="row">
           <div class="col-md-4">
@@ -168,19 +230,35 @@
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label">Fecha y Hora</label>
-              <input type="datetime-local" class="form-control" [(ngModel)]="nuevaProgramacion.fecha">
+              <label class="form-label">Fecha</label>
+              <input type="date" class="form-control" [(ngModel)]="nuevaProgramacion.fecha">
             </div>
-            <button class="btn btn-primary w-100" (click)="guardarProgramacion()">Crear Turno</button>
+            <div class="mb-3">
+              <label class="form-label">Hora Inicio</label>
+              <input type="time" class="form-control" [(ngModel)]="nuevaProgramacion.hora_inicio">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Hora Fin</label>
+              <input type="time" class="form-control" [(ngModel)]="nuevaProgramacion.hora_fin">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" (click)="guardarProgramacion()">
+                {{ editProgramacionId ? 'Actualizar Turno' : 'Crear Turno' }}
+              </button>
+              @if (editProgramacionId) {
+                <button class="btn btn-secondary" (click)="cancelarEdicionProgramacion()">Cancelar</button>
+              }
+            </div>
           </div>
           <div class="col-md-8">
             <h5>Próximos Turnos</h5>
-            <table class="table">
+            <table class="table align-middle">
               <thead>
                 <tr>
                   <th>Ruta</th>
                   <th>Bus</th>
                   <th>Fecha</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,6 +267,16 @@
                     <td>{{ prog.ruta_id?.nombre }}</td>
                     <td>{{ prog.bus_id?.placa }}</td>
                     <td>{{ prog.fecha | date:'medium' }}</td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" (click)="editarProgramacion(prog)">
+                          <i class="ti ti-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="eliminarProgramacion(prog._id)">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -196,6 +284,15 @@
           </div>
         </div>
       </div>
-    </mat-tab>
-  </mat-tab-group>
+    }
+
+    <!-- Conductores -->
+    @if (activeSection === 'drivers') {
+      <div class="p-4 text-center">
+        <i class="ti ti-steering-wheel text-muted mb-3" style="font-size: 48px;"></i>
+        <h5>Gestión de Conductores</h5>
+        <p class="text-muted">La sección de conductores está en construcción.</p>
+      </div>
+    }
+  </div>
 </div>

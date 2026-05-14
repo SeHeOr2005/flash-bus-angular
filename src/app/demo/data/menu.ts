@@ -76,7 +76,7 @@ export const menus: Navigation[] = [
         title: 'Buses',
         type: 'item',
         classes: 'nav-item',
-        url: '/management',
+        url: '/management/buses',
         icon: '#custom-notification-status',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       },
@@ -85,7 +85,16 @@ export const menus: Navigation[] = [
         title: 'Rutas',
         type: 'item',
         classes: 'nav-item',
-        url: '/management',
+        url: '/management/routes',
+        icon: '#custom-map-pin',
+        allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
+      },
+      {
+        id: 'stops',
+        title: 'Paraderos',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/management/stops',
         icon: '#custom-map-pin',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       },
@@ -94,8 +103,17 @@ export const menus: Navigation[] = [
         title: 'Conductores',
         type: 'item',
         classes: 'nav-item',
-        url: '/management',
+        url: '/management/drivers',
         icon: '#custom-profile-2user-outline',
+        allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
+      },
+      {
+        id: 'schedules',
+        title: 'Programación',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/management/schedules',
+        icon: '#custom-clipboard',
         allowedRoles: [UserRole.ADMIN_SISTEMA, UserRole.ADMIN_EMPRESA]
       }
     ]

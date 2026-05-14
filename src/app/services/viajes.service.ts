@@ -42,6 +42,10 @@ export class ViajesService {
     return this.api.put(`rutas/${id}`, data);
   }
 
+  eliminarRuta(id: string): Observable<any> {
+    return this.api.delete(`rutas/${id}`);
+  }
+
   // Paraderos (HU-010)
   crearParadero(data: any): Observable<any> {
     return this.api.post('paraderos', data);
@@ -49,6 +53,14 @@ export class ViajesService {
 
   getParaderos(): Observable<any[]> {
     return this.api.get<any[]>('paraderos');
+  }
+
+  actualizarParadero(id: string, data: any): Observable<any> {
+    return this.api.put(`paraderos/${id}`, data);
+  }
+
+  eliminarParadero(id: string): Observable<any> {
+    return this.api.delete(`paraderos/${id}`);
   }
 
   // Programación (HU-011)
@@ -60,6 +72,14 @@ export class ViajesService {
     return this.api.post('programaciones', data);
   }
 
+  actualizarProgramacion(id: string, data: any): Observable<any> {
+    return this.api.put(`programaciones/${id}`, data);
+  }
+
+  eliminarProgramacion(id: string): Observable<any> {
+    return this.api.delete(`programaciones/${id}`);
+  }
+
   // Buses (HU-012)
   getBuses(): Observable<any[]> {
     return this.api.get<any[]>('buses');
@@ -67,5 +87,13 @@ export class ViajesService {
 
   crearBus(data: any): Observable<any> {
     return this.api.post('buses', data);
+  }
+
+  actualizarBus(id: string, data: any): Observable<any> {
+    return this.api.put(`buses/${id}`, data);
+  }
+
+  eliminarBus(id: string): Observable<any> {
+    return this.api.delete(`buses/${id}`);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,9 +28,11 @@ export default class ParaderosCercanosComponent implements OnInit, AfterViewInit
   markersLayer: L.FeatureGroup | undefined;
   userMarker: L.Marker | undefined;
 
-  constructor(private viajesService: ViajesService) {}
+  constructor(private viajesService: ViajesService, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.cdr.detectChanges();
+  }
 
   ngAfterViewInit(): void {
     this.initMap();

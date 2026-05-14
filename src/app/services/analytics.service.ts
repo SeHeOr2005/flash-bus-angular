@@ -9,18 +9,18 @@ export class AnalyticsService {
 
   constructor(private api: ApiService) { }
 
-  // HU-014: Analytics - Ingresos
+  // HU-014: Analytics - Ingresos por método de pago
   getIngresosAnalytics(): Observable<any> {
-    return this.api.get('analytics/ingresos');
+    return this.api.get<any>('analytics/ingresos-metodo-pago');
   }
 
-  // HU-015: Analytics - Edades
+  // HU-015: Analytics - Distribución por edades
   getEdadesAnalytics(): Observable<any> {
-    return this.api.get('analytics/edades');
+    return this.api.get<any>('analytics/pasajeros-edades');
   }
 
-  // HU-016: Analytics - Incidentes
+  // HU-016: Analytics - Tendencia de incidentes
   getIncidentesAnalytics(): Observable<any> {
-    return this.api.get('analytics/incidentes');
+    return this.api.get<any>('analytics/incidentes-tendencia');
   }
 }

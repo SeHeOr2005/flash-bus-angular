@@ -53,8 +53,9 @@
                     {{ ruta.descripcion }}
                   </p>
                   @if (rutaSeleccionada?._id === ruta._id && nodosRuta.length > 0) {
-                    <div class="mt-2 p-2 bg-light text-dark rounded small">
-                      <i class="ti ti-clock me-1"></i> Tiempo estimado total: <b>{{ nodosRuta.length * 5 }} min</b>
+                    <div class="mt-2 p-2 bg-light text-dark rounded small d-flex justify-content-between">
+                      <span><i class="ti ti-clock me-1"></i> Tiempo: <b>{{ ruta.duracion_estimada || (nodosRuta.length * 5) }} min</b></span>
+                      <span><i class="ti ti-ruler-2 me-1"></i> Distancia: <b>{{ ruta.distancia_km || (nodosRuta.length * 1.5) }} km</b></span>
                     </div>
                   }
                 </button>

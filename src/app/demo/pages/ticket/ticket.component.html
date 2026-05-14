@@ -29,9 +29,13 @@
           <div class="col-md-4">
             <label class="form-label">Método de Pago</label>
             <select class="form-select" [(ngModel)]="nuevoMetodoPagoId">
-              <option value="" disabled selected>Seleccione método de pago...</option>
-              @for (mp of metodosPago; track mp._id) {
-                <option [value]="mp._id">{{ mp.nombre }}</option>
+              @if (metodosPago.length === 0) {
+                <option value="" disabled selected>No tienes billeteras vinculadas...</option>
+              } @else {
+                <option value="" disabled selected>Seleccione método de pago...</option>
+                @for (mp of metodosPago; track mp._id) {
+                  <option [value]="mp._id">{{ mp.metodo_pago_id?.nombre }} (Saldo: ${{ mp.saldo }})</option>
+                }
               }
             </select>
           </div>

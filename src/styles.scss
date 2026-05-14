@@ -4,6 +4,9 @@
 // font
 @import 'scss/fonts/tabler-icons.min.css';
 
+// leaflet map styles
+@import 'leaflet/dist/leaflet.css';
+
 // theme setup
 @import './app/@theme/styles/theme-palette-colors.scss';
 @import './app/@theme/styles/theme.scss';

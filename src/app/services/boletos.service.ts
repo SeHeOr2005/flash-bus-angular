@@ -11,21 +11,16 @@ export class BoletosService {
 
   // HU-003: Abordaje
   abordar(programacionId: string, ciudadanoId: string, metodoPagoId: string): Observable<any> {
-    // Para simplificar, el abordaje crea un boleto con estado 'activo'
-    return this.api.post<any>('boletos', {
+    return this.api.post<any>('boletos/abordar', {
       programacion_id: programacionId,
       ciudadano_id: ciudadanoId,
-      metodo_pago_id: metodoPagoId,
-      estado: 'activo'
-      // El backend o el controlador debería descontar saldo de la tarjeta, pero aquí creamos el boleto
+      metodo_pago_id: metodoPagoId
     });
   }
 
   // HU-004: Descenso
   descender(boletoId: string): Observable<any> {
-    return this.api.put<any>(`boletos/${boletoId}`, {
-      estado: 'completado'
-    });
+    return this.api.post<any>(`boletos/${boletoId}/descender`, {});
   }
 
   // HU-005: Historial y recorridos
@@ -40,5 +35,13 @@ export class BoletosService {
 
   getMetodosPago(): Observable<any[]> {
     return this.api.get<any[]>('metodos-pago');
+  }
+
+  getMetodosPagoCiudadano(ciudadanoId: string): Observable<any[]> {
+    return this.api.get<any[]>(`metodo-pago-ciudadano/ciudadano/${ciudadanoId}`);
+  }
+
+  getCiudadanos(): Observable<any[]> {
+    return this.api.get<any[]>('ciudadanos');
   }
 }

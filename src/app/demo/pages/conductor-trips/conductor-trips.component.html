@@ -72,6 +72,14 @@
                   </select>
                 </div>
                 <div class="mb-3">
+                  <label class="form-label text-danger fw-semibold">Severidad</label>
+                  <select class="form-select border-danger" [(ngModel)]="nuevoIncidente.severidad">
+                    @for (sev of nivelesSeveridad; track sev) {
+                      <option [value]="sev">{{ sev | uppercase }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="mb-3">
                   <label class="form-label text-danger fw-semibold">Descripción Detallada</label>
                   <textarea class="form-select border-danger" rows="3" [(ngModel)]="nuevoIncidente.descripcion" placeholder="Explique brevemente lo sucedido..."></textarea>
                 </div>

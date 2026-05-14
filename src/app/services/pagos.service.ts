@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { ApiService } from './api.service';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 declare var ePayco: any;
@@ -9,8 +11,32 @@ declare var ePayco: any;
 export class PagosService {
   private handler: any;
 
-  constructor() {
+  constructor(private api: ApiService) {
     this.initEpayco();
+  }
+
+  getMetodoPagoCiudadano(ciudadanoId: string): Observable<any[]> {
+    return this.api.get<any[]>(`metodo-pago-ciudadano/ciudadano/${ciudadanoId}`);
+  }
+
+  getMetodosPagoGenerales(): Observable<any[]> {
+    return this.api.get<any[]>('metodos-pago');
+  }
+
+  vincularMetodoPago(data: { ciudadano_id: string, metodo_pago_id: string, detalle: string }): Observable<any> {
+    return this.api.post<any>('metodo-pago-ciudadano', data);
+  }
+
+  getCiudadanos(): Observable<any[]> {
+    return this.api.get<any[]>('ciudadanos');
+  }
+
+  crearCiudadano(data: any): Observable<any> {
+    return this.api.post<any>('ciudadanos', data);
+  }
+
+  recargarSaldo(id: string, monto: number): Observable<any> {
+    return this.api.post<any>(`metodo-pago-ciudadano/${id}/recargar`, { monto });
   }
 
   private initEpayco() {

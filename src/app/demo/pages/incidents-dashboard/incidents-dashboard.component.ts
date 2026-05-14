@@ -22,9 +22,18 @@ export default class IncidentsDashboardComponent implements OnInit {
 
   cargarIncidentes() {
     this.cargando = true;
-    this.incidentesService.getIncidentes().subscribe({
+    this.incidentesService.getAllIncidentesBus().subscribe({
       next: (data) => {
-        this.incidentes = data;
+        this.incidentes = data.map(ib => ({
+          _id: ib._id,
+          incidente_id: ib.incidente_id?._id,
+          tipo: ib.incidente_id?.tipo || 'Desconocido',
+          descripcion: ib.descripcion || ib.incidente_id?.descripcion,
+          fecha_reporte: ib.createdAt,
+          severidad: ib.severidad,
+          estado: ib.incidente_id?.estado || 'reportado',
+          bus: ib.bus_id?.placa || 'N/A'
+        }));
         this.cargando = false;
       },
       error: () => {
@@ -35,25 +44,25 @@ export default class IncidentsDashboardComponent implements OnInit {
             tipo: 'Mecánico',
             descripcion: 'Llanta pinchada en la Av. Santander.',
             fecha_reporte: new Date().toISOString(),
-            programacion_id: {
-              bus_id: { placa: 'WEO-123' },
-              ruta_id: { nombre: 'Centro - Enea' }
-            }
-          },
-          {
-            _id: '2',
-            tipo: 'Tráfico',
-            descripcion: 'Trancón fuerte por accidente de terceros, retraso de 20 min.',
-            fecha_reporte: new Date(Date.now() - 86400000).toISOString(),
-            programacion_id: {
-              bus_id: { placa: 'KOL-987' },
-              ruta_id: { nombre: 'Maltería - Centro' }
-            }
+            severidad: 'alta',
+            estado: 'reportado',
+            bus: 'WEO-123'
           }
         ];
         this.cargando = false;
       }
     });
+  }
+
+  cambiarEstado(incidenteId: string, nuevoEstado: string) {
+    if (!incidenteId) return;
+    
+    // Suponemos que tienes un método en incidentesService para actualizar el estado en el backend
+    // Por ahora solo actualizamos el estado visualmente
+    const inc = this.incidentes.find(i => i.incidente_id === incidenteId);
+    if (inc) {
+      inc.estado = nuevoEstado;
+    }
   }
 
   getBadgeColor(tipo: string): string {
@@ -62,6 +71,16 @@ export default class IncidentsDashboardComponent implements OnInit {
       case 'Tráfico': return 'bg-warning text-dark';
       case 'Accidente': return 'bg-danger';
       case 'Pasajero': return 'bg-info text-dark';
+      default: return 'bg-secondary';
+    }
+  }
+
+  getSeveridadColor(sev: string): string {
+    switch (sev) {
+      case 'baja': return 'bg-success';
+      case 'media': return 'bg-warning text-dark';
+      case 'alta': return 'bg-orange text-white';
+      case 'critica': return 'bg-danger';
       default: return 'bg-secondary';
     }
   }

@@ -24,10 +24,11 @@
             <tr>
               <th>Fecha y Hora</th>
               <th>Bus (Placa)</th>
-              <th>Ruta Afectada</th>
+              <th>Severidad</th>
               <th>Tipo</th>
               <th>Descripción</th>
               <th>Estado</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -38,9 +39,11 @@
                   <small class="text-muted">{{ incidente.fecha_reporte | date:'shortTime' }}</small>
                 </td>
                 <td>
-                  <span class="badge bg-light text-dark border"><i class="ti ti-bus me-1"></i>{{ incidente.programacion_id?.bus_id?.placa || 'N/A' }}</span>
+                  <span class="badge bg-light text-dark border"><i class="ti ti-bus me-1"></i>{{ incidente.bus }}</span>
                 </td>
-                <td>{{ incidente.programacion_id?.ruta_id?.nombre || 'N/A' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getSeveridadColor(incidente.severidad)">{{ incidente.severidad | uppercase }}</span>
+                </td>
                 <td>
                   <span class="badge" [ngClass]="getBadgeColor(incidente.tipo)">{{ incidente.tipo }}</span>
                 </td>
@@ -48,13 +51,30 @@
                   <div class="text-truncate" [title]="incidente.descripcion">{{ incidente.descripcion }}</div>
                 </td>
                 <td>
-                  <span class="badge bg-warning text-dark">Pendiente</span>
+                  <span class="badge bg-secondary text-white" 
+                        [class.bg-warning]="incidente.estado === 'reportado'"
+                        [class.bg-info]="incidente.estado === 'en_revision'"
+                        [class.bg-success]="incidente.estado === 'resuelto'">
+                    {{ incidente.estado | uppercase }}
+                  </span>
+                </td>
+                <td>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                      Cambiar
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" href="javascript:void(0)" (click)="cambiarEstado(incidente.incidente_id, 'en_revision')">En revisión</a></li>
+                      <li><a class="dropdown-item" href="javascript:void(0)" (click)="cambiarEstado(incidente.incidente_id, 'resuelto')">Resuelto</a></li>
+                      <li><a class="dropdown-item" href="javascript:void(0)" (click)="cambiarEstado(incidente.incidente_id, 'descartado')">Descartado</a></li>
+                    </ul>
+                  </div>
                 </td>
               </tr>
             }
             @if (incidentes.length === 0) {
               <tr>
-                <td colspan="6" class="text-center p-4">
+                <td colspan="7" class="text-center p-4">
                   <i class="ti ti-check text-success mb-2" style="font-size: 32px;"></i>
                   <p class="mb-0 text-muted">No se han reportado incidentes recientemente.</p>
                 </td>

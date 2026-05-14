@@ -18,12 +18,9 @@ const routes: Routes = [
         pathMatch: 'full'
       },
       // Enlaces legacy del menú / bookmarks → rutas reales del proyecto
-      { path: 'buses', redirectTo: 'management', pathMatch: 'full' },
-      { path: 'routes', redirectTo: 'management', pathMatch: 'full' },
-      { path: 'drivers', redirectTo: 'management', pathMatch: 'full' },
       { path: 'monitoring', redirectTo: 'analytics', pathMatch: 'full' },
-      { path: 'trips', redirectTo: 'management', pathMatch: 'full' },
-      { path: 'companies', redirectTo: 'management', pathMatch: 'full' },
+      { path: 'trips', redirectTo: 'management/schedules', pathMatch: 'full' },
+      { path: 'companies', redirectTo: 'management/companies', pathMatch: 'full' },
       { path: 'settings', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'my-route', redirectTo: 'search-buses', pathMatch: 'full' },
       {
@@ -63,8 +60,13 @@ const routes: Routes = [
         loadComponent: () => import('./demo/pages/incidents-dashboard/incidents-dashboard.component')
       },
       {
-        path: 'management',
+        path: 'management/:section',
         loadComponent: () => import('./demo/pages/management/management.component')
+      },
+      {
+        path: 'management',
+        redirectTo: 'management/buses',
+        pathMatch: 'full'
       },
       {
         path: 'analytics',

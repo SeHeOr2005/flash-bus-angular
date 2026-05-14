@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SharedModule } from 'src/app/demo/shared/shared.module';
@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { BoletosService } from 'src/app/services/boletos.service';
+import { AuthService } from 'src/app/@theme/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 import * as L from 'leaflet';
 
@@ -17,8 +19,7 @@ import * as L from 'leaflet';
   styleUrls: ['./ticket.component.scss']
 })
 export default class TicketComponent implements OnInit, OnDestroy {
-  // Para demostración, mockeamos un ciudadano logueado
-  ciudadanoId = '609b55555555555555555555'; // Asume un ID válido, o lo sacamos del Auth
+  ciudadanoId = '';
 
   boletosActivos: any[] = [];
   boletosCompletados: any[] = [];
@@ -36,11 +37,25 @@ export default class TicketComponent implements OnInit, OnDestroy {
   routeLayer: L.FeatureGroup | undefined;
   viajeSeleccionado: any = null;
 
-  constructor(private boletosService: BoletosService) {}
+  constructor(
+    private boletosService: BoletosService, 
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    this.cargarDatosFormulario();
-    this.cargarBoletos();
+    const user = this.authService.getCurrentUser();
+    if (user && user.email) {
+      this.boletosService.getCiudadanos().subscribe(ciudadanos => {
+        const matching = ciudadanos.find(c => c.email === user.email);
+        if (matching) {
+          this.ciudadanoId = matching._id;
+          this.cargarDatosFormulario();
+          this.cargarBoletos();
+        }
+        this.cdr.detectChanges();
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -50,8 +65,17 @@ export default class TicketComponent implements OnInit, OnDestroy {
   }
 
   cargarDatosFormulario() {
-    this.boletosService.getProgramaciones().subscribe(data => this.programaciones = data);
-    this.boletosService.getMetodosPago().subscribe(data => this.metodosPago = data);
+    this.boletosService.getProgramaciones().subscribe(data => {
+      this.programaciones = data;
+      this.cdr.detectChanges();
+    });
+    
+    if (this.ciudadanoId) {
+      this.boletosService.getMetodosPagoCiudadano(this.ciudadanoId).subscribe(data => {
+        this.metodosPago = data;
+        this.cdr.detectChanges();
+      });
+    }
   }
 
   cargarBoletos() {
@@ -110,11 +134,10 @@ export default class TicketComponent implements OnInit, OnDestroy {
   verRecorrido(boleto: any) {
     this.viajeSeleccionado = boleto;
     
-    // Simular renderizado del mapa
     setTimeout(() => {
       if (this.map) this.map.remove();
       this.initMap();
-      this.dibujarRutaSimulada();
+      this.dibujarRutaReal(boleto);
     }, 100);
   }
 
@@ -127,22 +150,25 @@ export default class TicketComponent implements OnInit, OnDestroy {
     this.routeLayer = L.featureGroup().addTo(this.map);
   }
 
-  dibujarRutaSimulada(): void {
-    if (!this.map || !this.routeLayer) return;
+  dibujarRutaReal(boleto: any): void {
+    if (!this.map || !this.routeLayer || !boleto.ruta_id) return;
 
-    // Simulamos origen y destino
-    const latlngs: L.LatLngExpression[] = [
-      [4.6097, -74.0817],
-      [4.6200, -74.0900],
-      [4.6300, -74.0700]
-    ];
+    // Fetch nodos de la ruta desde MS-Negocio
+    fetch(`${environment.negocioUrl}/rutas/${boleto.ruta_id._id}/nodos`)
+      .then(res => res.json())
+      .then(nodos => {
+        if (!nodos.length) return;
+        
+        const latlngs: L.LatLngExpression[] = nodos.map((n: any) => [n.latitud, n.longitud]);
+        L.polyline(latlngs, { color: 'green', weight: 4 }).addTo(this.routeLayer!);
+        
+        // Marcamos origen (abordaje) y final (descenso)
+        L.circleMarker(latlngs[0], { color: 'green', radius: 8, fillOpacity: 1 }).addTo(this.routeLayer!).bindPopup(`<b>Abordaje</b><br>${nodos[0].nombre}`).openPopup();
+        L.circleMarker(latlngs[latlngs.length - 1], { color: 'red', radius: 8, fillOpacity: 1 }).addTo(this.routeLayer!).bindPopup(`<b>Descenso</b><br>${nodos[nodos.length - 1].nombre}`);
 
-    L.polyline(latlngs, { color: 'green' }).addTo(this.routeLayer);
-    
-    L.marker(latlngs[0]).addTo(this.routeLayer).bindPopup('<b>Abordaje</b>').openPopup();
-    L.marker(latlngs[latlngs.length - 1]).addTo(this.routeLayer).bindPopup('<b>Descenso</b>');
-
-    this.map.fitBounds(this.routeLayer.getBounds(), { padding: [30, 30] });
+        this.map!.fitBounds(this.routeLayer!.getBounds(), { padding: [30, 30] });
+      })
+      .catch(err => console.error('Error fetching nodos for map', err));
   }
 
   cerrarMapa() {

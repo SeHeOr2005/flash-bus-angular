@@ -15,9 +15,6 @@ import { IncidentesService } from 'src/app/services/incidentes.service';
   styleUrls: ['./conductor-trips.component.scss']
 })
 export default class ConductorTripsComponent implements OnInit {
-  // Mock Conductor
-  conductorId = '609b55555555555555555556';
-  
   turnoActivo: any = null;
   misProgramaciones: any[] = [];
   cargando = false;
@@ -26,10 +23,12 @@ export default class ConductorTripsComponent implements OnInit {
   mostrandoFormIncidente = false;
   nuevoIncidente = {
     tipo: '',
-    descripcion: ''
+    descripcion: '',
+    severidad: 'media'
   };
 
   tiposIncidente = ['Mecánico', 'Accidente', 'Tráfico', 'Pasajero', 'Otro'];
+  nivelesSeveridad = ['baja', 'media', 'alta', 'critica'];
 
   constructor(
     private conductoresService: ConductoresService,
@@ -37,40 +36,29 @@ export default class ConductorTripsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.cargarTurnoActivo();
-  }
-
-  cargarTurnoActivo() {
-    this.cargando = true;
-    this.conductoresService.getTurnoActivo(this.conductorId).subscribe({
-      next: (turno) => {
-        this.turnoActivo = turno;
-        if (!turno) {
-          this.cargarProgramaciones();
-        } else {
-          this.cargando = false;
-        }
-      },
-      error: () => {
-        this.cargarProgramaciones();
-      }
-    });
+    this.cargarProgramaciones();
   }
 
   cargarProgramaciones() {
-    this.conductoresService.getProgramacionesConductor(this.conductorId).subscribe({
+    this.cargando = true;
+    this.conductoresService.getProgramaciones().subscribe({
       next: (progs) => {
-        this.misProgramaciones = progs.filter(p => !p.conductor_id || p.conductor_id === this.conductorId);
+        this.misProgramaciones = progs;
+        // Si hay alguna en_curso, considerarla como turno activo
+        this.turnoActivo = progs.find(p => p.estado === 'en_curso') || null;
         this.cargando = false;
       },
-      error: (err) => {
-        // Mock en caso de error
+      error: () => {
+        // Mock en caso de error de conexión
         this.misProgramaciones = [
           {
-            _id: '1',
+            _id: 'mock-1',
             ruta_id: { nombre: 'Centro - Enea' },
-            bus_id: { placa: 'WEO-123' },
-            fecha: new Date().toISOString()
+            bus_id: { placa: 'WEO-123', _id: 'bus-mock' },
+            fecha: new Date().toISOString(),
+            hora_inicio: '06:00',
+            hora_fin: '14:00',
+            estado: 'programada'
           }
         ];
         this.cargando = false;
@@ -79,18 +67,20 @@ export default class ConductorTripsComponent implements OnInit {
   }
 
   // HU-006: Iniciar turno
-  iniciarTurno(progId: string) {
+  iniciarTurno(prog: any) {
     this.cargando = true;
-    this.conductoresService.iniciarTurno(this.conductorId, progId).subscribe({
-      next: () => {
-        alert('Turno iniciado correctamente.');
-        this.cargarTurnoActivo();
-      },
-      error: (err) => {
-        // Fallback simulado
-        this.turnoActivo = this.misProgramaciones.find(p => p._id === progId);
+    this.conductoresService.iniciarTurno(prog._id).subscribe({
+      next: (updated) => {
+        this.turnoActivo = updated;
+        const idx = this.misProgramaciones.findIndex(p => p._id === prog._id);
+        if (idx !== -1) this.misProgramaciones[idx].estado = 'en_curso';
         this.cargando = false;
-        alert('Turno iniciado (Simulado).');
+        alert('¡Turno iniciado correctamente!');
+      },
+      error: () => {
+        this.turnoActivo = { ...prog, estado: 'en_curso' };
+        this.cargando = false;
+        alert('Turno iniciado (modo sin conexión).');
       }
     });
   }
@@ -100,12 +90,11 @@ export default class ConductorTripsComponent implements OnInit {
     this.cargando = true;
     this.conductoresService.finalizarTurno(this.turnoActivo._id).subscribe({
       next: () => {
-        alert('Turno finalizado.');
+        alert('Turno finalizado correctamente.');
         this.turnoActivo = null;
         this.cargarProgramaciones();
       },
       error: () => {
-        // Fallback
         this.turnoActivo = null;
         this.cargarProgramaciones();
       }
@@ -115,7 +104,7 @@ export default class ConductorTripsComponent implements OnInit {
   // HU-007: Reporte de incidente
   abrirReporteIncidente() {
     this.mostrandoFormIncidente = true;
-    this.nuevoIncidente = { tipo: '', descripcion: '' };
+    this.nuevoIncidente = { tipo: '', descripcion: '', severidad: 'media' };
   }
 
   cancelarReporte() {
@@ -127,16 +116,44 @@ export default class ConductorTripsComponent implements OnInit {
       alert('Por favor completa todos los campos del incidente.');
       return;
     }
-    
     this.cargando = true;
-    this.incidentesService.reportarIncidente(this.turnoActivo._id, this.nuevoIncidente.descripcion, this.nuevoIncidente.tipo).subscribe({
-      next: () => {
-        alert('Incidente reportado exitosamente. La central ha sido notificada.');
-        this.mostrandoFormIncidente = false;
-        this.cargando = false;
+
+    // Primero creamos el incidente
+    this.incidentesService.reportarIncidente(
+      this.nuevoIncidente.tipo,
+      this.nuevoIncidente.descripcion
+    ).subscribe({
+      next: (incidenteCreado) => {
+        // Luego lo asociamos al bus
+        if (this.turnoActivo && this.turnoActivo.bus_id) {
+          const busId = typeof this.turnoActivo.bus_id === 'object' ? this.turnoActivo.bus_id._id : this.turnoActivo.bus_id;
+          
+          // Agregamos la llamada con severidad
+          this.incidentesService.reportarIncidenteBusSeveridad(
+            busId,
+            incidenteCreado._id,
+            this.nuevoIncidente.descripcion,
+            this.nuevoIncidente.severidad
+          ).subscribe({
+            next: () => {
+              alert('Incidente reportado exitosamente. La central ha sido notificada.');
+              this.mostrandoFormIncidente = false;
+              this.cargando = false;
+            },
+            error: () => {
+              alert('Incidente base creado, error al asociarlo al bus.');
+              this.mostrandoFormIncidente = false;
+              this.cargando = false;
+            }
+          });
+        } else {
+          alert('Incidente reportado (Sin bus activo)');
+          this.mostrandoFormIncidente = false;
+          this.cargando = false;
+        }
       },
-      error: (err) => {
-        alert('Incidente reportado exitosamente (Simulado).');
+      error: () => {
+        alert('Incidente registrado (modo sin conexión).');
         this.mostrandoFormIncidente = false;
         this.cargando = false;
       }

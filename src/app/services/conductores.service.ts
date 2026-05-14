@@ -9,24 +9,28 @@ export class ConductoresService {
 
   constructor(private api: ApiService) { }
 
-  // HU-006: Inicio de turno
-  iniciarTurno(conductorId: string, programacionId: string): Observable<any> {
-    // Aquí el conductor se asocia a la programación del bus
-    return this.api.put(`programaciones/${programacionId}/inicio-turno`, { conductor_id: conductorId });
+  // HU-006: Obtener todas las programaciones (el conductor filtra las suyas en el componente)
+  getProgramaciones(): Observable<any[]> {
+    return this.api.get<any[]>('programaciones');
   }
 
-  // Finalizar turno
+  // Iniciar turno: cambia el estado de la programación a 'en_curso'
+  iniciarTurno(programacionId: string): Observable<any> {
+    return this.api.put<any>(`programaciones/${programacionId}`, { estado: 'en_curso' });
+  }
+
+  // Finalizar turno: cambia el estado a 'finalizada'
   finalizarTurno(programacionId: string): Observable<any> {
-    return this.api.put(`programaciones/${programacionId}/fin-turno`, {});
+    return this.api.put<any>(`programaciones/${programacionId}`, { estado: 'finalizada' });
   }
 
-  // Obtener programaciones asignadas al conductor
-  getProgramacionesConductor(conductorId: string): Observable<any[]> {
-    return this.api.get<any[]>(`programaciones/conductor/${conductorId}`);
+  // Obtener turnos activos del conductor (filtramos localmente)
+  getTurnos(): Observable<any[]> {
+    return this.api.get<any[]>('turnos');
   }
 
-  // Obtener programación activa actual (para el turno en curso)
-  getTurnoActivo(conductorId: string): Observable<any> {
-    return this.api.get<any>(`programaciones/conductor/${conductorId}/activo`);
+  // Obtener conductor por userId de seguridad
+  getConductores(): Observable<any[]> {
+    return this.api.get<any[]>('conductores');
   }
 }
